@@ -15,84 +15,59 @@ function showPlayer(id, type) {
   playerBox.scrollIntoView({ behavior: "smooth" });
 }
 
-async function fetchAll(query = "") {
+function createTile(item, type) {
+  const div = document.createElement("div");
+  div.className = "movie";
+
+  const title = item.title || item.name || "Untitled";
+  const poster = item.poster_path;
+
+  if (!poster) return null;
+
+  div.innerHTML = `
+    <img src="https://image.tmdb.org/t/p/w300${poster}">
+    <h3>${title}</h3>
+    <button class="playBtn">Play</button>
+  `;
+
+  div.querySelector(".playBtn").onclick = e => {
+    e.stopPropagation();
+    showPlayer(item.id, type);
+  };
+
+  div.onclick = () => {
+    window.location.href = `/movie.html?id=${item.id}&type=${type}`;
+  };
+
+  return div;
+}
+
+// ---------- LOAD POPULAR ----------
+async function loadPopular() {
   moviesContainer.textContent = "Loading movies...";
   showsContainer.textContent = "Loading shows...";
 
   try {
-    const movieUrl = query
-      ? `/api/search-movie?q=${encodeURIComponent(query)}`
-      : `/api/popular`;
-
-    const showUrl = query
-      ? `/api/search-show?q=${encodeURIComponent(query)}`
-      : `/api/popular-shows`;
-
-    const [movieRes, showRes] = await Promise.all([
-      fetch(movieUrl),
-      fetch(showUrl),
+    const [moviesRes, showsRes] = await Promise.all([
+      fetch("/api/popular"),
+      fetch("/api/popular-shows"),
     ]);
 
-    const movies = await movieRes.json();
-    const shows = await showRes.json();
+    const movies = await moviesRes.json();
+    const shows = await showsRes.json();
 
-    // ----- MOVIES -----
     moviesContainer.innerHTML = "";
-    if (movies.results && movies.results.length) {
-      movies.results.forEach(m => {
-        if (!m.poster_path) return;
-
-        const div = document.createElement("div");
-        div.className = "movie";
-        div.innerHTML = `
-          <img src="https://image.tmdb.org/t/p/w300${m.poster_path}">
-          <h3>${m.title || m.name || "Untitled Movie"}</h3>
-          <button class="playBtn">Play</button>
-        `;
-
-        div.querySelector(".playBtn").onclick = e => {
-          e.stopPropagation();
-          showPlayer(m.id, "movie");
-        };
-
-        div.onclick = () => {
-          window.location.href = `/movie.html?id=${m.id}&type=movie`;
-        };
-
-        moviesContainer.appendChild(div);
-      });
-    } else {
-      moviesContainer.textContent = "No movies found.";
-    }
-
-    // ----- SHOWS -----
     showsContainer.innerHTML = "";
-    if (shows.results && shows.results.length) {
-      shows.results.forEach(s => {
-        if (!s.poster_path) return;
 
-        const div = document.createElement("div");
-        div.className = "movie";
-        div.innerHTML = `
-          <img src="https://image.tmdb.org/t/p/w300${s.poster_path}">
-          <h3>${s.name || s.title || "Untitled Show"}</h3>
-          <button class="playBtn">Play</button>
-        `;
+    movies.results.forEach(m => {
+      const tile = createTile(m, "movie");
+      if (tile) moviesContainer.appendChild(tile);
+    });
 
-        div.querySelector(".playBtn").onclick = e => {
-          e.stopPropagation();
-          showPlayer(s.id, "show");
-        };
-
-        div.onclick = () => {
-          window.location.href = `/movie.html?id=${s.id}&type=show`;
-        };
-
-        showsContainer.appendChild(div);
-      });
-    } else {
-      showsContainer.textContent = "No shows found.";
-    }
+    shows.results.forEach(s => {
+      const tile = createTile(s, "show");
+      if (tile) showsContainer.appendChild(tile);
+    });
 
   } catch (err) {
     moviesContainer.textContent = "Failed to load movies.";
@@ -101,16 +76,55 @@ async function fetchAll(query = "") {
   }
 }
 
-// Initial load
-fetchAll();
+// ---------- SEARCH ----------
+async function searchAll(query) {
+  moviesContainer.textContent = "Searching...";
+  showsContainer.textContent = "Searching...";
 
-// Search
+  try {
+    const res = await fetch(`/api/search?q=${encodeURIComponent(query)}`);
+    const data = await res.json();
+
+    moviesContainer.innerHTML = "";
+    showsContainer.innerHTML = "";
+
+    if (!data.results || !data.results.length) {
+      moviesContainer.textContent = "No results.";
+      showsContainer.textContent = "";
+      return;
+    }
+
+    data.results.forEach(item => {
+      if (item.media_type === "movie") {
+        const tile = createTile(item, "movie");
+        if (tile) moviesContainer.appendChild(tile);
+      }
+
+      if (item.media_type === "tv") {
+        const tile = createTile(item, "show");
+        if (tile) showsContainer.appendChild(tile);
+      }
+    });
+
+  } catch (err) {
+    moviesContainer.textContent = "Search failed.";
+    showsContainer.textContent = "";
+    console.error(err);
+  }
+}
+
+// Initial load
+loadPopular();
+
+// Search handlers
 searchBtn.onclick = () => {
-  fetchAll(searchInput.value.trim());
+  const q = searchInput.value.trim();
+  if (q) searchAll(q);
+  else loadPopular();
 };
 
 searchInput.addEventListener("keydown", e => {
   if (e.key === "Enter") {
-    fetchAll(searchInput.value.trim());
+    searchBtn.onclick();
   }
 });
