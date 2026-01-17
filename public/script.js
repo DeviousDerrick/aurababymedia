@@ -30,6 +30,26 @@ async function fetchMovies(query = "") {
   <h3>${movie.title}</h3>
   <button class="playBtn">Play</button>
 `;
+const playBtn = div.querySelector(".playBtn");
+playBtn.onclick = (e) => {
+  e.stopPropagation(); // Prevent clicking the tile itself
+
+  const vidfastSrc = `https://vidfast.pro/movie/${movie.id}?autoPlay=true`;
+
+  const iframe = document.createElement("iframe");
+  iframe.src = vidfastSrc;
+  iframe.width = "100%";
+  iframe.height = "600px";
+  iframe.frameBorder = 0;
+  iframe.allowFullscreen = true;
+
+  const playerContainer = document.getElementById("playerContainer");
+  playerContainer.innerHTML = ""; // Clear previous
+  playerContainer.appendChild(iframe);
+
+  // Scroll to the player
+  iframe.scrollIntoView({ behavior: "smooth" });
+};
 
 
       // CLICK → DETAILS PAGE
