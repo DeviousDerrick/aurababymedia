@@ -53,3 +53,26 @@ app.get("*", (req, res) => {
 app.listen(PORT, () => {
   console.log("Aurababy Media running on port", PORT);
 });
+// Popular TV Shows
+app.get("/api/popular-shows", async (req, res) => {
+  try {
+    const r = await fetch(
+      `https://api.themoviedb.org/3/tv/popular?api_key=${TMDB_KEY}`
+    );
+    res.json(await r.json());
+  } catch (err) {
+    res.status(500).json({ error: "Failed to fetch shows" });
+  }
+});
+
+// Popular Anime (genre id: 16 = Animation)
+app.get("/api/popular-anime", async (req, res) => {
+  try {
+    const r = await fetch(
+      `https://api.themoviedb.org/3/discover/tv?api_key=${TMDB_KEY}&with_genres=16&sort_by=popularity.desc`
+    );
+    res.json(await r.json());
+  } catch (err) {
+    res.status(500).json({ error: "Failed to fetch anime" });
+  }
+});
