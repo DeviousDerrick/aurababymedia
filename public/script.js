@@ -1,101 +1,105 @@
-const moviesContainer = document.getElementById("movies");
 const searchInput = document.getElementById("searchInput");
 const searchBtn = document.getElementById("searchBtn");
 
-// Type selector (default: movies)
-let contentType = "movie";
+const moviesContainer = document.getElementById("movies");
+const showsContainer = document.getElementById("shows");
 
-// Optional: create tabs at the top
-const header = document.querySelector("header");
-const tabContainer = document.createElement("div");
-tabContainer.style.marginLeft = "20px";
-tabContainer.innerHTML = `
-  <button id="moviesTab">Movies</button>
-  <button id="showsTab">Shows</button>
-`;
-header.appendChild(tabContainer);
-
-document.getElementById("moviesTab").onclick = () => {
-  contentType = "movie";
-  fetchContent();
-};
-document.getElementById("showsTab").onclick = () => {
-  contentType = "show";
-  fetchContent();
-};
-
-// Player container
 const playerContainer = document.getElementById("playerContainer");
 
-// Function to show player in the big box
-function showPlayer(contentId, type) {
-  playerContainer.innerHTML = "";
+// Tabs
+const moviesTab = document.getElementById("moviesTab");
+const showsTab = document.getElementById("showsTab");
 
-  const vidfastSrc =
-    type === "movie"
-      ? `https://vidfast.pro/movie/${contentId}?autoPlay=true`
-      : `https://vidfast.pro/tv/${contentId}/1/1?autoPlay=true`;
+let activeTab = "movies";
+
+moviesTab.onclick = () => {
+  activeTab = "movies";
+  moviesTab.classList.add("active");
+  showsTab.classList.remove("active");
+};
+showsTab.onclick = () => {
+  activeTab = "shows";
+  showsTab.classList.add("active");
+  moviesTab.classList.remove("active");
+};
+
+// Helper: load player
+function showPlayer(id, type) {
+  playerContainer.innerHTML = "";
+  let src = "";
+  if (type === "movie") {
+    src = `https://vidfast.pro/movie/${id}?autoPlay=true`;
+  } else if (type === "show") {
+    src = `https://vidfast.pro/tv/${id}/1/1?autoPlay=true`;
+  }
 
   const iframe = document.createElement("iframe");
-  iframe.src = vidfastSrc;
-  iframe.width = "100%";
-  iframe.height = "100%";
-  iframe.frameBorder = 0;
+  iframe.src = src;
   iframe.allowFullscreen = true;
-
   playerContainer.appendChild(iframe);
 }
 
-// Fetch content (movies or shows)
+// Fetch content
 async function fetchContent(query = "") {
   moviesContainer.textContent = "Loading...";
+  showsContainer.textContent = "Loading...";
 
   try {
-    let url = "";
-    if (query) {
-      url = `/api/search?q=${encodeURIComponent(query)}`;
-    } else {
-      if (contentType === "movie") url = `/api/popular`;
-      else if (contentType === "show") url = `/api/popular-shows`;
-    }
-
-    const res = await fetch(url);
-    const data = await res.json();
-
+    // Movies
+    let moviesUrl = query ? `/api/search?q=${encodeURIComponent(query)}` : `/api/popular`;
+    const moviesRes = await fetch(moviesUrl);
+    const moviesData = await moviesRes.json();
     moviesContainer.innerHTML = "";
-    if (!data.results || data.results.length === 0) {
-      moviesContainer.textContent = "No results found.";
-      return;
+    if (moviesData.results && moviesData.results.length > 0) {
+      moviesData.results.forEach(m => {
+        if (!m.poster_path) return;
+        const div = document.createElement("div");
+        div.className = "movie";
+        div.innerHTML = `
+          <img src="https://image.tmdb.org/t/p/w300${m.poster_path}">
+          <h3>${m.title}</h3>
+          <button class="playBtn">Play</button>
+        `;
+        div.querySelector(".playBtn").onclick = e => {
+          e.stopPropagation();
+          showPlayer(m.id, "movie");
+        };
+        div.onclick = () => window.location.href = `/movie.html?id=${m.id}&type=movie`;
+        moviesContainer.appendChild(div);
+      });
+    } else {
+      moviesContainer.textContent = "No movies found.";
     }
 
-    data.results.forEach(item => {
-      if (!item.poster_path) return;
-
-      const div = document.createElement("div");
-      div.className = "movie";
-
-      div.innerHTML = `
-        <img src="https://image.tmdb.org/t/p/w300${item.poster_path}">
-        <h3>${item.title || item.name}</h3>
-        <button class="playBtn">Play</button>
-      `;
-
-      // Details page click
-      div.onclick = () => {
-        window.location.href = `/movie.html?id=${item.id}&type=${contentType}`;
-      };
-
-      // Play button
-      div.querySelector(".playBtn").onclick = (e) => {
-        e.stopPropagation();
-        showPlayer(item.id, contentType);
-      };
-
-      moviesContainer.appendChild(div);
-    });
+    // Shows
+    let showsUrl = query ? `/api/search?q=${encodeURIComponent(query)}` : `/api/popular-shows`;
+    const showsRes = await fetch(showsUrl);
+    const showsData = await showsRes.json();
+    showsContainer.innerHTML = "";
+    if (showsData.results && showsData.results.length > 0) {
+      showsData.results.forEach(s => {
+        if (!s.poster_path) return;
+        const div = document.createElement("div");
+        div.className = "movie";
+        div.innerHTML = `
+          <img src="https://image.tmdb.org/t/p/w300${s.poster_path}">
+          <h3>${s.name}</h3>
+          <button class="playBtn">Play</button>
+        `;
+        div.querySelector(".playBtn").onclick = e => {
+          e.stopPropagation();
+          showPlayer(s.id, "show");
+        };
+        div.onclick = () => window.location.href = `/movie.html?id=${s.id}&type=show`;
+        showsContainer.appendChild(div);
+      });
+    } else {
+      showsContainer.textContent = "No shows found.";
+    }
 
   } catch (err) {
-    moviesContainer.textContent = "Failed to load content.";
+    moviesContainer.textContent = "Failed to load movies.";
+    showsContainer.textContent = "Failed to load shows.";
     console.error(err);
   }
 }
@@ -103,10 +107,8 @@ async function fetchContent(query = "") {
 // Initial load
 fetchContent();
 
-// Search button
+// Search
 searchBtn.onclick = () => fetchContent(searchInput.value.trim());
-
-// Enter key search
 searchInput.addEventListener("keydown", e => {
   if (e.key === "Enter") fetchContent(searchInput.value.trim());
 });
