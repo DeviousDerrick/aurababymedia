@@ -2,6 +2,17 @@ const moviesContainer = document.getElementById("movies");
 const searchInput = document.getElementById("searchInput");
 const searchBtn = document.getElementById("searchBtn");
 
+// Add player container dynamically if it doesn't exist
+let playerContainer = document.getElementById("playerContainer");
+if (!playerContainer) {
+  playerContainer = document.createElement("div");
+  playerContainer.id = "playerContainer";
+  playerContainer.style.width = "100%";
+  playerContainer.style.maxWidth = "900px";
+  playerContainer.style.margin = "40px auto";
+  document.body.appendChild(playerContainer);
+}
+
 async function fetchMovies(query = "") {
   moviesContainer.textContent = "Loading popular movies...";
 
@@ -25,36 +36,50 @@ async function fetchMovies(query = "") {
 
       const div = document.createElement("div");
       div.className = "movie";
+
       div.innerHTML = `
-  <img src="https://image.tmdb.org/t/p/w300${movie.poster_path}">
-  <h3>${movie.title}</h3>
-  <button class="playBtn">Play</button>
-`;
-const playBtn = div.querySelector(".playBtn");
-playBtn.onclick = (e) => {
-  e.stopPropagation(); // Prevent clicking the tile itself
+        <img src="https://image.tmdb.org/t/p/w300${movie.poster_path}">
+        <h3>${movie.title}</h3>
+        <button class="playBtn">Play</button>
+      `;
 
-  const vidfastSrc = `https://vidfast.pro/movie/${movie.id}?autoPlay=true`;
-
-  const iframe = document.createElement("iframe");
-  iframe.src = vidfastSrc;
-  iframe.width = "100%";
-  iframe.height = "600px";
-  iframe.frameBorder = 0;
-  iframe.allowFullscreen = true;
-
-  const playerContainer = document.getElementById("playerContainer");
-  playerContainer.innerHTML = ""; // Clear previous
-  playerContainer.appendChild(iframe);
-
-  // Scroll to the player
-  iframe.scrollIntoView({ behavior: "smooth" });
-};
-
-
-      // CLICK → DETAILS PAGE
+      // Click → Details page (optional)
       div.onclick = () => {
         window.location.href = `/movie.html?id=${movie.id}&type=movie`;
+      };
+
+      // Play button click → load VidFast iframe
+      const playBtn = div.querySelector(".playBtn");
+      playBtn.onclick = (e) => {
+        e.stopPropagation(); // Prevent tile click
+
+        const vidfastSrc = `https://vidfast.pro/movie/${movie.id}?autoPlay=true`;
+
+        // Clear previous content
+        playerContainer.innerHTML = "";
+
+        // Add close button
+        const closeBtn = document.createElement("button");
+        closeBtn.textContent = "Close Player";
+        closeBtn.style.marginBottom = "10px";
+        closeBtn.style.padding = "10px 20px";
+        closeBtn.style.fontSize = "16px";
+        closeBtn.style.cursor = "pointer";
+        closeBtn.onclick = () => (playerContainer.innerHTML = "");
+        playerContainer.appendChild(closeBtn);
+
+        // Add iframe
+        const iframe = document.createElement("iframe");
+        iframe.src = vidfastSrc;
+        iframe.width = "100%";
+        iframe.height = "600px";
+        iframe.frameBorder = 0;
+        iframe.allowFullscreen = true;
+
+        playerContainer.appendChild(iframe);
+
+        // Scroll to player smoothly
+        iframe.scrollIntoView({ behavior: "smooth" });
       };
 
       moviesContainer.appendChild(div);
