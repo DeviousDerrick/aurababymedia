@@ -1,38 +1,44 @@
 const moviesContainer = document.getElementById("movies");
 const showsContainer = document.getElementById("shows");
+
 const searchInput = document.getElementById("searchInput");
 const searchBtn = document.getElementById("searchBtn");
-const playerBox = document.getElementById("playerBox");
 
-function showPlayer(id, type) {
-  playerBox.innerHTML = `
+const playerContainer = document.getElementById("playerContainer");
+
+const moviesTab = document.getElementById("moviesTab");
+const showsTab = document.getElementById("showsTab");
+
+// ---------------- PLAYER ----------------
+function playMedia(id, type) {
+  playerContainer.innerHTML = `
     <iframe
       src="https://vidfast.net/embed/${type}/${id}"
       allowfullscreen
       referrerpolicy="no-referrer"
     ></iframe>
   `;
-  playerBox.scrollIntoView({ behavior: "smooth" });
+  playerContainer.scrollIntoView({ behavior: "smooth" });
 }
 
+// ---------------- TILE ----------------
 function createTile(item, type) {
+  if (!item.poster_path) return null;
+
   const div = document.createElement("div");
   div.className = "movie";
 
   const title = item.title || item.name || "Untitled";
-  const poster = item.poster_path;
-
-  if (!poster) return null;
 
   div.innerHTML = `
-    <img src="https://image.tmdb.org/t/p/w300${poster}">
+    <img src="https://image.tmdb.org/t/p/w300${item.poster_path}">
     <h3>${title}</h3>
     <button class="playBtn">Play</button>
   `;
 
   div.querySelector(".playBtn").onclick = e => {
     e.stopPropagation();
-    showPlayer(item.id, type);
+    playMedia(item.id, type);
   };
 
   div.onclick = () => {
@@ -42,7 +48,7 @@ function createTile(item, type) {
   return div;
 }
 
-// ---------- LOAD POPULAR ----------
+// ---------------- LOAD POPULAR ----------------
 async function loadPopular() {
   moviesContainer.textContent = "Loading movies...";
   showsContainer.textContent = "Loading shows...";
@@ -76,7 +82,7 @@ async function loadPopular() {
   }
 }
 
-// ---------- SEARCH ----------
+// ---------------- SEARCH ----------------
 async function searchAll(query) {
   moviesContainer.textContent = "Searching...";
   showsContainer.textContent = "Searching...";
@@ -113,8 +119,24 @@ async function searchAll(query) {
   }
 }
 
-// Initial load
+// ---------------- TABS ----------------
+moviesTab.onclick = () => {
+  moviesTab.classList.add("active");
+  showsTab.classList.remove("active");
+  moviesContainer.style.display = "grid";
+  showsContainer.style.display = "none";
+};
+
+showsTab.onclick = () => {
+  showsTab.classList.add("active");
+  moviesTab.classList.remove("active");
+  showsContainer.style.display = "grid";
+  moviesContainer.style.display = "none";
+};
+
+// ---------------- INIT ----------------
 loadPopular();
+showsContainer.style.display = "none";
 
 // Search handlers
 searchBtn.onclick = () => {
@@ -124,7 +146,5 @@ searchBtn.onclick = () => {
 };
 
 searchInput.addEventListener("keydown", e => {
-  if (e.key === "Enter") {
-    searchBtn.onclick();
-  }
+  if (e.key === "Enter") searchBtn.onclick();
 });
