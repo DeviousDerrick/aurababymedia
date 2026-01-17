@@ -1,125 +1,57 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
+  <meta charset="UTF-8" />
   <title>Aurababy Media</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
   <style>
     body {
       margin: 0;
       font-family: Arial, sans-serif;
       background: #0f0f0f;
-      color: #fff;
+      color: white;
     }
-
     header {
-      padding: 20px;
-      background: #151515;
-      text-align: center;
-      font-size: 24px;
-      font-weight: bold;
-    }
-
-    .search-bar {
       display: flex;
-      justify-content: center;
-      margin: 20px 0;
+      gap: 10px;
+      padding: 15px;
+      background: #111;
     }
-
-    .search-bar input {
-      width: 60%;
+    input {
+      flex: 1;
       padding: 10px;
-      border-radius: 5px 0 0 5px;
-      border: none;
       font-size: 16px;
-      outline: none;
     }
-
-    .search-bar button {
-      padding: 10px 15px;
-      border-radius: 0 5px 5px 0;
-      border: none;
-      background: #ff3f3f;
-      color: #fff;
-      font-weight: bold;
+    button {
+      padding: 10px 16px;
+      font-size: 16px;
       cursor: pointer;
     }
-    .tabs {
-  display: flex;
-  justify-content: center;
-  gap: 10px;
-  margin-bottom: 20px;
-}
-
-.tab-btn {
-  padding: 10px 20px;
-  border: none;
-  background: #222;
-  color: #fff;
-  font-weight: bold;
-  cursor: pointer;
-  border-radius: 5px;
-}
-
-.tab-btn.active {
-  background: #ff3f3f;
-}
-
     #movies {
       display: grid;
-      grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+      grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
       gap: 16px;
-      padding: 20px;
+      padding: 16px;
     }
-
     .movie {
-      background: #1c1c1c;
-      border-radius: 8px;
-      overflow: hidden;
+      cursor: pointer;
       text-align: center;
-      transition: transform 0.2s;
     }
-
-    .movie:hover {
-      transform: scale(1.05);
-    }
-
     .movie img {
       width: 100%;
-      display: block;
+      border-radius: 10px;
     }
-
-    .movie h3 {
-      font-size: 14px;
-      padding: 10px;
-      margin: 0;
-    }
-
-    @media(max-width: 600px){
-      .search-bar input { width: 70%; }
-    }
-
   </style>
 </head>
 <body>
-  <header>Aurababy Media 🎬</header>
 
-  <div class="search-bar">
-    <input type="text" id="searchInput" placeholder="Search movies...">
-    <button id="searchBtn">Search</button>
-  </div>
-  
-<div class="tabs">
-  <button class="tab-btn active" data-category="movies">Movies 🎥</button>
-  <button class="tab-btn" data-category="shows">Shows 📺</button>
-  <button class="tab-btn" data-category="anime">Anime 🏯</button>
-</div>
+<header>
+  <input id="searchInput" placeholder="Search movies..." />
+  <button id="searchBtn">Search</button>
+</header>
 
-  <main id="movies">
-    Loading popular movies...
-  </main>
+<div id="movies">Loading popular movies...</div>
 
-  <script src="script.js"></script>
+<script src="script.js"></script>
 </body>
 </html>
