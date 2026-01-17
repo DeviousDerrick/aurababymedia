@@ -2,63 +2,52 @@ const moviesContainer = document.getElementById("movies");
 const searchInput = document.getElementById("searchInput");
 const searchBtn = document.getElementById("searchBtn");
 
-// Add bottom-fixed player container dynamically
-let playerContainer = document.getElementById("playerContainer");
-if (!playerContainer) {
-  playerContainer = document.createElement("div");
-  playerContainer.id = "playerContainer";
-  playerContainer.style.position = "fixed";
-  playerContainer.style.bottom = "0";
-  playerContainer.style.left = "0";
-  playerContainer.style.width = "100%";
-  playerContainer.style.height = "600px"; // bigger player
-  playerContainer.style.background = "#000";
-  playerContainer.style.zIndex = "1000";
-  playerContainer.style.display = "none"; // hide until play
-  playerContainer.style.flexDirection = "column";
-  playerContainer.style.alignItems = "center";
-  playerContainer.style.justifyContent = "center";
-  document.body.appendChild(playerContainer);
-}
+// Type selector (default: movies)
+let contentType = "movie";
 
-// Helper to show the player
+// Optional: create tabs at the top
+const header = document.querySelector("header");
+const tabContainer = document.createElement("div");
+tabContainer.style.marginLeft = "20px";
+tabContainer.innerHTML = `
+  <button id="moviesTab">Movies</button>
+  <button id="showsTab">Shows</button>
+`;
+header.appendChild(tabContainer);
+
+document.getElementById("moviesTab").onclick = () => {
+  contentType = "movie";
+  fetchContent();
+};
+document.getElementById("showsTab").onclick = () => {
+  contentType = "show";
+  fetchContent();
+};
+
+// Player container
+const playerContainer = document.getElementById("playerContainer");
+
+// Function to show player in the big box
 function showPlayer(contentId, type) {
   playerContainer.innerHTML = "";
-  playerContainer.style.display = "flex";
 
-  // Close button
-  const closeBtn = document.createElement("button");
-  closeBtn.textContent = "Close Player";
-  closeBtn.style.margin = "10px";
-  closeBtn.style.padding = "10px 20px";
-  closeBtn.style.fontSize = "16px";
-  closeBtn.style.cursor = "pointer";
-  closeBtn.onclick = () => {
-    playerContainer.style.display = "none";
-    playerContainer.innerHTML = "";
-  };
-  playerContainer.appendChild(closeBtn);
+  const vidfastSrc =
+    type === "movie"
+      ? `https://vidfast.pro/movie/${contentId}?autoPlay=true`
+      : `https://vidfast.pro/tv/${contentId}/1/1?autoPlay=true`;
 
-  // Determine VidFast URL based on type
-  let vidfastSrc = "";
-  if (type === "movie") {
-    vidfastSrc = `https://vidfast.pro/movie/${contentId}?autoPlay=true`;
-  } else if (type === "show" || type === "anime") {
-    vidfastSrc = `https://vidfast.pro/tv/${contentId}/1/1?autoPlay=true`; // default season 1 episode 1
-  }
-
-  // Create iframe
   const iframe = document.createElement("iframe");
   iframe.src = vidfastSrc;
   iframe.width = "100%";
   iframe.height = "100%";
   iframe.frameBorder = 0;
   iframe.allowFullscreen = true;
+
   playerContainer.appendChild(iframe);
 }
 
-// Fetch and display content
-async function fetchContent(query = "", type = "movie") {
+// Fetch content (movies or shows)
+async function fetchContent(query = "") {
   moviesContainer.textContent = "Loading...";
 
   try {
@@ -66,9 +55,8 @@ async function fetchContent(query = "", type = "movie") {
     if (query) {
       url = `/api/search?q=${encodeURIComponent(query)}`;
     } else {
-      if (type === "movie") url = `/api/popular`;
-      else if (type === "show") url = `/api/popular-shows`;
-      else if (type === "anime") url = `/api/popular-anime`;
+      if (contentType === "movie") url = `/api/popular`;
+      else if (contentType === "show") url = `/api/popular-shows`;
     }
 
     const res = await fetch(url);
@@ -92,18 +80,15 @@ async function fetchContent(query = "", type = "movie") {
         <button class="playBtn">Play</button>
       `;
 
-      // Click → Details page
+      // Details page click
       div.onclick = () => {
-        const typeParam = type === "anime" ? "show" : type;
-        window.location.href = `/movie.html?id=${item.id}&type=${typeParam}`;
+        window.location.href = `/movie.html?id=${item.id}&type=${contentType}`;
       };
 
       // Play button
-      const playBtn = div.querySelector(".playBtn");
-      playBtn.onclick = (e) => {
+      div.querySelector(".playBtn").onclick = (e) => {
         e.stopPropagation();
-        const typeParam = type === "anime" ? "anime" : type;
-        showPlayer(item.id, typeParam);
+        showPlayer(item.id, contentType);
       };
 
       moviesContainer.appendChild(div);
@@ -115,7 +100,7 @@ async function fetchContent(query = "", type = "movie") {
   }
 }
 
-// Initial load (default: movies)
+// Initial load
 fetchContent();
 
 // Search button
