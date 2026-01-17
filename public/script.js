@@ -1,82 +1,59 @@
 const moviesContainer = document.getElementById("movies");
 const searchInput = document.getElementById("searchInput");
 const searchBtn = document.getElementById("searchBtn");
-const tabButtons = document.querySelectorAll(".tab-btn");
 
-let currentCategory = "movies"; // default tab
+async function fetchMovies(query = "") {
+  moviesContainer.textContent = "Loading popular movies...";
 
-// Map category to backend endpoint
-function getEndpoint(category, query = "") {
-  switch(category) {
-    case "movies":
-      return query ? `/api/search?q=${encodeURIComponent(query)}` : "/api/popular";
-    case "shows":
-      return query ? `/api/search?q=${encodeURIComponent(query)}` : "/api/popular-shows";
-    case "anime":
-      return query ? `/api/search?q=${encodeURIComponent(query)}` : "/api/popular-anime";
-  }
-}
-
-async function fetchContent(query = "") {
-  moviesContainer.innerHTML = "Loading...";
   try {
-    const res = await fetch(getEndpoint(currentCategory, query));
-    const data = await res.json();
+    const url = query
+      ? `/api/search?q=${encodeURIComponent(query)}`
+      : `/api/popular`;
 
-    if (!data.results || data.results.length === 0) {
-      moviesContainer.textContent = "No content found.";
-      return;
-    }
+    const res = await fetch(url);
+    const data = await res.json();
 
     moviesContainer.innerHTML = "";
 
-    data.results.forEach(item => {
-      const poster = item.poster_path || item.backdrop_path;
-      if (!poster) return;
+    if (!data.results || data.results.length === 0) {
+      moviesContainer.textContent = "No results found.";
+      return;
+    }
+
+    data.results.forEach(movie => {
+      if (!movie.poster_path) return;
 
       const div = document.createElement("div");
       div.className = "movie";
       div.innerHTML = `
-        <img src="https://image.tmdb.org/t/p/w300${poster}" alt="${item.title || item.name}">
-        <h3>${item.title || item.name}</h3>
+        <img src="https://image.tmdb.org/t/p/w300${movie.poster_path}">
+        <h3>${movie.title}</h3>
       `;
 
-      // CLICK TO DETAILS PAGE
-      div.addEventListener("click", () => {
-        window.location.href = `/movie.html?id=${item.id}&type=${currentCategory}`;
-      });
+      // CLICK → DETAILS PAGE
+      div.onclick = () => {
+        window.location.href = `/movie.html?id=${movie.id}&type=movie`;
+      };
 
       moviesContainer.appendChild(div);
     });
 
   } catch (err) {
-    moviesContainer.textContent = "Failed to load content.";
+    moviesContainer.textContent = "Failed to load movies.";
     console.error(err);
   }
 }
 
-// Initial load: Movies
-fetchContent();
+// Initial load
+fetchMovies();
 
-// Search button click
-searchBtn.addEventListener("click", () => {
-  const query = searchInput.value.trim();
-  fetchContent(query);
-});
+// Search
+searchBtn.onclick = () => {
+  fetchMovies(searchInput.value.trim());
+};
 
-// Press Enter to search
-searchInput.addEventListener("keypress", e => {
+searchInput.addEventListener("keydown", e => {
   if (e.key === "Enter") {
-    fetchContent(searchInput.value.trim());
+    fetchMovies(searchInput.value.trim());
   }
-});
-
-// Tab switching
-tabButtons.forEach(btn => {
-  btn.addEventListener("click", () => {
-    tabButtons.forEach(b => b.classList.remove("active"));
-    btn.classList.add("active");
-    currentCategory = btn.dataset.category;
-    fetchContent(); // load content for new tab
-  });
 });
