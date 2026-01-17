@@ -28,3 +28,7 @@ app.get("/search", async (req, res) => {
 app.listen(PORT, () => {
   console.log("Server running on port", PORT);
 });
+app.get("/debug", (req, res) => {
+  res.send({ TMDB_KEY: TMDB_KEY ? "SET" : "NOT SET" });
+});
+
