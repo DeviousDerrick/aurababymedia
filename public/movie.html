@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Movie Details</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <style>
+    body { margin:0; font-family: Arial, sans-serif; background:#0f0f0f; color:#fff; }
+    header { padding:20px; text-align:center; font-size:24px; font-weight:bold; background:#151515; }
+    .content { padding:20px; max-width:800px; margin:auto; }
+    img { width:100%; max-width:300px; border-radius:10px; }
+    .details { margin-top:20px; }
+  </style>
+</head>
+<body>
+  <header>Movie Details</header>
+  <div class="content" id="details">
+    Loading...
+  </div>
+
+  <script>
+    const detailsContainer = document.getElementById("details");
+    const params = new URLSearchParams(window.location.search);
+    const id = params.get("id");
+    const type = params.get("type"); // movies, shows, anime
+
+    if (!id) {
+      detailsContainer.textContent = "No movie selected.";
+    } else {
+      // Determine endpoint
+      let endpoint = "";
+      if (type === "movies") endpoint = `/api/movie/${id}`;
+      if (type === "shows") endpoint = `/api/show/${id}`;
+      if (type === "anime") endpoint = `/api/show/${id}`; // Anime is TV shows
+
+      fetch(endpoint)
+        .then(res => res.json())
+        .then(data => {
+          detailsContainer.innerHTML = `
+            <img src="https://image.tmdb.org/t/p/w500${data.poster_path || data.backdrop_path}" alt="${data.title || data.name}">
+            <div class="details">
+              <h2>${data.title || data.name}</h2>
+              <p><strong>Rating:</strong> ${data.vote_average}</p>
+              <p><strong>Release Date:</strong> ${data.release_date || data.first_air_date}</p>
+              <p>${data.overview}</p>
+            </div>
+          `;
+        })
+        .catch(err => {
+          detailsContainer.textContent = "Failed to load details.";
+          console.error(err);
+        });
+    }
+  </script>
+</body>
+</html>
