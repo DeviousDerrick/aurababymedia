@@ -1,0 +1,19 @@
+<!DOCTYPE html>
+<html>
+<body>
+<h1>Proxy Test</h1>
+<pre id="out"></pre>
+
+<script>
+fetch("https://aurababy-proxy2.onrender.com/popular")
+  .then(r => r.json())
+  .then(d => {
+    document.getElementById("out").textContent =
+      JSON.stringify(d, null, 2);
+  })
+  .catch(e => {
+    document.getElementById("out").textContent = e.toString();
+  });
+</script>
+</body>
+</html>
