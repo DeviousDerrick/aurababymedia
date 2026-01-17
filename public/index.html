@@ -6,309 +6,134 @@
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@800&display=swap" rel="stylesheet">
   <style>
-    * {
-      box-sizing: border-box;
-    }
-    
     body {
       margin: 0;
       font-family: 'Poppins', sans-serif;
-      font-weight: 800;
-      background: #000000;
+      background: #000;
       color: white;
-      min-height: 100vh;
-      position: relative;
-      overflow-x: hidden;
     }
-    
-    body::before {
-      content: '';
-      position: fixed;
-      top: 0;
-      left: 0;
-      width: 100%;
-      height: 100%;
-      background: 
-        radial-gradient(ellipse at top left, rgba(138, 43, 226, 0.3) 0%, transparent 50%),
-        radial-gradient(ellipse at top right, rgba(75, 0, 130, 0.3) 0%, transparent 50%),
-        radial-gradient(ellipse at bottom left, rgba(255, 0, 255, 0.2) 0%, transparent 50%),
-        radial-gradient(ellipse at bottom right, rgba(0, 150, 255, 0.2) 0%, transparent 50%),
-        radial-gradient(circle at 20% 50%, rgba(255, 105, 180, 0.15) 0%, transparent 40%),
-        radial-gradient(circle at 80% 50%, rgba(138, 43, 226, 0.15) 0%, transparent 40%);
-      z-index: 0;
-      animation: auraShift 15s ease-in-out infinite;
-    }
-    
-    @keyframes auraShift {
-      0%, 100% { opacity: 1; }
-      50% { opacity: 0.7; }
-    }
-    
-    .stars {
-      position: fixed;
-      top: 0;
-      left: 0;
-      width: 100%;
-      height: 100%;
-      pointer-events: none;
-      z-index: 1;
-    }
-    
-    .star {
-      position: absolute;
-      width: 2px;
-      height: 2px;
-      background: white;
-      border-radius: 50%;
-      animation: twinkle 3s infinite;
-    }
-    
-    @keyframes twinkle {
-      0%, 100% { opacity: 1; }
-      50% { opacity: 0.3; }
-    }
-    
-    .planets {
-      position: fixed;
-      top: 0;
-      left: 0;
-      width: 100%;
-      height: 100%;
-      pointer-events: none;
-      z-index: 2;
-    }
-    
-    .planet {
-      position: absolute;
-      border-radius: 50%;
-      animation: float 20s ease-in-out infinite;
-      filter: blur(1px);
-    }
-    
-    .planet1 {
-      width: 120px;
-      height: 120px;
-      top: 10%;
-      right: 15%;
-      background: radial-gradient(circle at 30% 30%, #ff6ec7, #8a2be2);
-      box-shadow: 0 0 60px rgba(255, 110, 199, 0.6), inset -20px -20px 40px rgba(0, 0, 0, 0.3);
-      animation-delay: 0s;
-    }
-    
-    .planet2 {
-      width: 80px;
-      height: 80px;
-      bottom: 20%;
-      left: 10%;
-      background: radial-gradient(circle at 35% 35%, #00bfff, #4b0082);
-      box-shadow: 0 0 50px rgba(0, 191, 255, 0.5), inset -15px -15px 30px rgba(0, 0, 0, 0.3);
-      animation-delay: -5s;
-    }
-    
-    .planet3 {
-      width: 100px;
-      height: 100px;
-      top: 50%;
-      left: 5%;
-      background: radial-gradient(circle at 40% 40%, #ff00ff, #6a0dad);
-      box-shadow: 0 0 55px rgba(255, 0, 255, 0.6), inset -18px -18px 35px rgba(0, 0, 0, 0.3);
-      animation-delay: -10s;
-    }
-    
-    .planet4 {
-      width: 60px;
-      height: 60px;
-      top: 30%;
-      right: 8%;
-      background: radial-gradient(circle at 30% 30%, #9d4edd, #3c096c);
-      box-shadow: 0 0 40px rgba(157, 78, 221, 0.5), inset -12px -12px 25px rgba(0, 0, 0, 0.3);
-      animation-delay: -15s;
-    }
-    
-    @keyframes float {
-      0%, 100% {
-        transform: translateY(0) rotate(0deg);
-      }
-      50% {
-        transform: translateY(-30px) rotate(5deg);
-      }
-    }
-    
+
     header {
-      position: relative;
-      z-index: 10;
       display: flex;
-      gap: 15px;
-      padding: 25px;
-      background: linear-gradient(135deg, rgba(138, 43, 226, 0.2) 0%, rgba(0, 0, 0, 0.8) 100%);
-      backdrop-filter: blur(10px);
-      border-bottom: 2px solid rgba(138, 43, 226, 0.5);
-      box-shadow: 0 8px 32px rgba(138, 43, 226, 0.3);
+      flex-wrap: wrap;
+      align-items: center;
+      gap: 10px;
+      padding: 20px;
     }
-    
+
     input {
       flex: 1;
-      padding: 16px 24px;
-      font-size: 18px;
-      font-family: 'Poppins', sans-serif;
-      font-weight: 800;
-      background: rgba(138, 43, 226, 0.1);
-      border: 2px solid rgba(138, 43, 226, 0.5);
+      padding: 12px 20px;
+      font-size: 16px;
       border-radius: 50px;
-      color: white;
+      border: 2px solid #fff;
       outline: none;
-      transition: all 0.3s ease;
-      box-shadow: 0 0 20px rgba(138, 43, 226, 0.3);
     }
-    
-    input::placeholder {
-      color: rgba(255, 255, 255, 0.5);
-      font-weight: 800;
-    }
-    
-    input:focus {
-      border-color: #ff00ff;
-      box-shadow: 0 0 30px rgba(255, 0, 255, 0.6);
-      background: rgba(138, 43, 226, 0.2);
-    }
-    
+
     button {
-      padding: 16px 40px;
-      font-size: 18px;
-      font-family: 'Poppins', sans-serif;
-      font-weight: 800;
+      padding: 12px 24px;
+      font-size: 16px;
+      border-radius: 50px;
+      border: none;
       cursor: pointer;
       background: linear-gradient(135deg, #8a2be2 0%, #ff00ff 100%);
-      border: none;
-      border-radius: 50px;
       color: white;
-      transition: all 0.3s ease;
-      box-shadow: 0 0 20px rgba(138, 43, 226, 0.6);
-      letter-spacing: 1px;
-      text-transform: uppercase;
     }
-    
-    button:hover {
-      transform: translateY(-2px);
-      box-shadow: 0 0 40px rgba(255, 0, 255, 0.8);
-      background: linear-gradient(135deg, #ff00ff 0%, #8a2be2 100%);
-    }
-    
-    button:active {
-      transform: translateY(0);
-    }
-    
-    #movies {
-      position: relative;
-      z-index: 10;
-      display: grid;
-      grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
-      gap: 30px;
-      padding: 40px;
-      font-family: 'Poppins', sans-serif;
-      font-weight: 800;
-    }
-    <div id="playerContainer" style="width:100%; max-width:900px; margin:40px auto;"></div>
 
-    
+    #tabs {
+      display: flex;
+      gap: 10px;
+      margin-top: 10px;
+    }
+
+    #tabs button {
+      background: transparent;
+      border: 2px solid white;
+      padding: 6px 16px;
+      border-radius: 20px;
+    }
+
+    #tabs button.active {
+      background: white;
+      color: black;
+    }
+
+    h2 {
+      margin-left: 20px;
+    }
+
+    #movies, #shows {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+      gap: 20px;
+      padding: 20px;
+    }
+
     .movie {
+      position: relative;
       cursor: pointer;
       text-align: center;
-      transition: all 0.4s ease;
-      position: relative;
     }
-    
-    .movie::before {
-      content: '';
-      position: absolute;
-      top: -5px;
-      left: -5px;
-      right: -5px;
-      bottom: -5px;
-      background: linear-gradient(45deg, #ff00ff, #8a2be2, #00bfff, #ff00ff);
-      background-size: 300% 300%;
-      border-radius: 15px;
-      opacity: 0;
-      z-index: -1;
-      transition: opacity 0.4s ease;
-      animation: gradientFlow 4s ease infinite;
-      filter: blur(10px);
-    }
-    <div id="playerContainer" style="
-  width: 95%;
-  max-width: 1200px;
-  margin: 40px auto;
-  height: 600px;
-  background: #000;
-  display: flex;
-  flex-direction: column;
-  justify-content: flex-start;
-  align-items: center;
-  padding: 10px;
-  border-radius: 12px;
-  box-shadow: 0 0 40px rgba(138,43,226,0.6);
-">
-  <p style="color:white;">Click Play on a movie or show to start streaming here</p>
-</div>
 
-    @keyframes gradientFlow {
-      0%, 100% { background-position: 0% 50%; }
-      50% { background-position: 100% 50%; }
-    }
-    
-    .movie:hover::before {
-      opacity: 1;
-    }
-    
-    .movie:hover {
-      transform: translateY(-10px) scale(1.05);
-    }
-    
     .movie img {
       width: 100%;
+      border-radius: 10px;
+    }
+
+    .movie button.playBtn {
+      margin-top: 5px;
+      padding: 6px 12px;
+      border-radius: 10px;
+      border: none;
+      background: #ff00ff;
+      cursor: pointer;
+      font-weight: bold;
+    }
+
+    /* Player box at bottom */
+    #playerContainer {
+      width: 95%;
+      max-width: 1200px;
+      height: 600px;
+      margin: 40px auto;
+      border: 3px solid white;
       border-radius: 12px;
-      box-shadow: 0 8px 32px rgba(138, 43, 226, 0.4);
-      transition: all 0.4s ease;
+      background: #000;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      overflow: hidden;
     }
-    
-    .movie:hover img {
-      box-shadow: 0 16px 48px rgba(255, 0, 255, 0.6);
-    }
-    
-    .movie h3 {
-      margin-top: 12px;
-      font-size: 16px;
-      color: white;
-      text-shadow: 0 0 10px rgba(138, 43, 226, 0.8);
+
+    #playerContainer iframe {
+      width: 100%;
+      height: 100%;
+      border: none;
     }
   </style>
 </head>
 <body>
-<div class="stars" id="stars"></div>
-<div class="planets">
-  <div class="planet planet1"></div>
-  <div class="planet planet2"></div>
-  <div class="planet planet3"></div>
-  <div class="planet planet4"></div>
-</div>
+
 <header>
-  <input id="searchInput" placeholder="Search movies..." />
+  <input id="searchInput" placeholder="Search..." />
   <button id="searchBtn">Search</button>
 </header>
-<div id="movies">Loading popular movies...</div>
-<script>
-  // Create stars
-  const starsContainer = document.getElementById('stars');
-  for (let i = 0; i < 150; i++) {
-    const star = document.createElement('div');
-    star.className = 'star';
-    star.style.left = Math.random() * 100 + '%';
-    star.style.top = Math.random() * 100 + '%';
-    star.style.animationDelay = Math.random() * 3 + 's';
-    star.style.opacity = Math.random();
-    starsContainer.appendChild(star);
-  }
-</script>
+
+<div id="tabs">
+  <button id="moviesTab" class="active">Movies</button>
+  <button id="showsTab">Shows</button>
+</div>
+
+<h2>Movies</h2>
+<div id="movies">Loading movies...</div>
+
+<h2>Shows</h2>
+<div id="shows">Loading shows...</div>
+
+<div id="playerContainer">
+  <p style="color:white;">Click Play on a movie or show to start streaming here</p>
+</div>
+
 <script src="script.js"></script>
 </body>
 </html>
