@@ -26,9 +26,11 @@ async function fetchMovies(query = "") {
       const div = document.createElement("div");
       div.className = "movie";
       div.innerHTML = `
-        <img src="https://image.tmdb.org/t/p/w300${movie.poster_path}">
-        <h3>${movie.title}</h3>
-      `;
+  <img src="https://image.tmdb.org/t/p/w300${movie.poster_path}">
+  <h3>${movie.title}</h3>
+  <button class="playBtn">Play</button>
+`;
+
 
       // CLICK → DETAILS PAGE
       div.onclick = () => {
