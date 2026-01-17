@@ -17,7 +17,6 @@ function getEndpoint(category, query = "") {
   }
 }
 
-// Fetch and display movies/shows/anime
 async function fetchContent(query = "") {
   moviesContainer.innerHTML = "Loading...";
   try {
@@ -41,6 +40,12 @@ async function fetchContent(query = "") {
         <img src="https://image.tmdb.org/t/p/w300${poster}" alt="${item.title || item.name}">
         <h3>${item.title || item.name}</h3>
       `;
+
+      // CLICK TO DETAILS PAGE
+      div.addEventListener("click", () => {
+        window.location.href = `/movie.html?id=${item.id}&type=${currentCategory}`;
+      });
+
       moviesContainer.appendChild(div);
     });
 
