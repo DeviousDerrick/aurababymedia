@@ -1,19 +1,65 @@
 <!DOCTYPE html>
-<html>
-<body>
-<h1>Proxy Test</h1>
-<pre id="out"></pre>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Aurababy Media</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 
-<script>
-fetch("https://aurababy-proxy2.onrender.com/popular")
-  .then(r => r.json())
-  .then(d => {
-    document.getElementById("out").textContent =
-      JSON.stringify(d, null, 2);
-  })
-  .catch(e => {
-    document.getElementById("out").textContent = e.toString();
-  });
-</script>
+  <style>
+    body {
+      margin: 0;
+      font-family: Arial, sans-serif;
+      background: #0f0f0f;
+      color: #fff;
+    }
+
+    header {
+      padding: 20px;
+      text-align: center;
+      background: #151515;
+      font-size: 24px;
+      font-weight: bold;
+    }
+
+    #movies {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+      gap: 16px;
+      padding: 20px;
+    }
+
+    .movie {
+      background: #1c1c1c;
+      border-radius: 8px;
+      overflow: hidden;
+      text-align: center;
+      transition: transform 0.2s;
+    }
+
+    .movie:hover {
+      transform: scale(1.05);
+    }
+
+    .movie img {
+      width: 100%;
+      display: block;
+    }
+
+    .movie h3 {
+      font-size: 14px;
+      padding: 10px;
+      margin: 0;
+    }
+  </style>
+</head>
+
+<body>
+  <header>Aurababy Media 🎬</header>
+
+  <main id="movies">
+    Loading movies...
+  </main>
+
+  <script src="script.js"></script>
 </body>
 </html>
