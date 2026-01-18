@@ -5,12 +5,14 @@ const IMG = "https://image.tmdb.org/t/p/w500";
 // ================= HELPERS =================
 const $ = id => document.getElementById(id);
 
-// Redirect to our new media.html player
-function playIframe(url) {
-  // Use the proxy URL
-  const proxyUrl = `${PROXY}${url}`;
-  // Redirect to media.html with the proxy URL
-  window.location.href = `media.html?src=${encodeURIComponent(proxyUrl)}`;
+// Redirect to media.html using your proxy
+function playIframe(targetUrl) {
+  // Encode the full target URL for the proxy
+  const encoded = encodeURIComponent(targetUrl);
+  const proxyUrl = `${PROXY}scramjet/${encoded}`;
+  
+  // Redirect to media.html
+  window.location.href = `media.html?src=${proxyUrl}`;
 }
 
 // ================= MOVIES =================
@@ -39,8 +41,8 @@ async function loadMovies(query = "") {
     `;
 
     div.querySelector("button").onclick = () => {
-      // Redirect to media.html using proxy
-      playIframe(`/movie/${movie.id}?autoPlay=true`);
+      const target = `https://vidfast.pro/movie/${movie.id}?autoPlay=true`;
+      playIframe(target);
     };
 
     moviesDiv.appendChild(div);
@@ -73,8 +75,9 @@ async function loadShows(query = "") {
     `;
 
     div.querySelector("button").onclick = () => {
-      // Redirect to media.html using proxy for S1E1
-      playIframe(`/tv/${show.id}/1/1?autoPlay=true`);
+      // Play S1E1 by default
+      const target = `https://vidfast.pro/tv/${show.id}/1/1?autoPlay=true`;
+      playIframe(target);
       loadSeasons(show.id);
     };
 
@@ -84,7 +87,8 @@ async function loadShows(query = "") {
 
 // ================= PLAY SHOW =================
 function playShow(showId, season, episode) {
-  playIframe(`/tv/${showId}/${season}/${episode}?autoPlay=true`);
+  const target = `https://vidfast.pro/tv/${showId}/${season}/${episode}?autoPlay=true`;
+  playIframe(target);
 }
 
 // ================= SEASONS =================
