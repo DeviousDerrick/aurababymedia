@@ -4,7 +4,9 @@
   <meta charset="UTF-8" />
   <title>Aurababy Media</title>
   <meta name="viewport" content="width=device-width, initial-scale=1" />
+
   <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@800&display=swap" rel="stylesheet">
+
   <style>
     body {
       margin: 0;
@@ -38,24 +40,7 @@
       cursor: pointer;
       background: linear-gradient(135deg, #8a2be2 0%, #ff00ff 100%);
       color: white;
-    }
-
-    #tabs {
-      display: flex;
-      gap: 10px;
-      margin-top: 10px;
-    }
-
-    #tabs button {
-      background: transparent;
-      border: 2px solid white;
-      padding: 6px 16px;
-      border-radius: 20px;
-    }
-
-    #tabs button.active {
-      background: white;
-      color: black;
+      font-weight: bold;
     }
 
     h2 {
@@ -70,8 +55,6 @@
     }
 
     .movie {
-      position: relative;
-      cursor: pointer;
       text-align: center;
     }
 
@@ -80,17 +63,31 @@
       border-radius: 10px;
     }
 
-    .movie button.playBtn {
-      margin-top: 5px;
-      padding: 6px 12px;
-      border-radius: 10px;
+    .playBtn {
+      margin-top: 8px;
+      padding: 6px 14px;
+      border-radius: 12px;
       border: none;
       background: #ff00ff;
       cursor: pointer;
       font-weight: bold;
     }
 
-    /* Player box at bottom */
+    /* Episode controls */
+    #episodeControls {
+      display: none;
+      text-align: center;
+      margin: 20px;
+      gap: 10px;
+    }
+
+    #episodeControls select {
+      padding: 8px;
+      font-size: 16px;
+      margin-right: 10px;
+    }
+
+    /* Player */
     #playerContainer {
       width: 95%;
       max-width: 1200px;
@@ -115,14 +112,9 @@
 <body>
 
 <header>
-  <input id="searchInput" placeholder="Search..." />
+  <input id="searchInput" placeholder="Search movies or shows..." />
   <button id="searchBtn">Search</button>
 </header>
-
-<div id="tabs">
-  <button id="moviesTab" class="active">Movies</button>
-  <button id="showsTab">Shows</button>
-</div>
 
 <h2>Movies</h2>
 <div id="movies">Loading movies...</div>
@@ -130,16 +122,18 @@
 <h2>Shows</h2>
 <div id="shows">Loading shows...</div>
 
-<div id="playerContainer">
-  <p style="color:white;">Click Play on a movie or show to start streaming here</p>
-</div>
-<!-- Episode Controls -->
-<div id="episodeControls" style="display:none; text-align:center; margin:20px;">
-  <select id="seasonSelect" style="padding:8px; margin-right:10px;"></select>
-  <select id="episodeSelect" style="padding:8px; margin-right:10px;"></select>
+<!-- SEASON / EPISODE CONTROLS -->
+<div id="episodeControls">
+  <select id="seasonSelect"></select>
+  <select id="episodeSelect"></select>
   <button id="playEpisode">Play Episode</button>
 </div>
 
-<script src="script.js"></script>
+<!-- PLAYER -->
+<div id="playerContainer">
+  <p>Click Play on a movie or show to start streaming</p>
+</div>
+
+<script src="/script.js"></script>
 </body>
 </html>
