@@ -45,6 +45,20 @@ app.get("/api/search", async (req, res) => {
   }
 });
 
+// Search shows
+app.get("/api/search-shows", async (req, res) => {
+  const q = req.query.q || "";
+  try {
+    const r = await fetch(
+      `https://api.themoviedb.org/3/search/tv?api_key=${TMDB_KEY}&query=${encodeURIComponent(q)}`
+    );
+    res.json(await r.json());
+  } catch {
+    res.status(500).json({ error: "Search shows failed" });
+  }
+});
+
+
 // Popular shows
 app.get("/api/popular-shows", async (req, res) => {
   try {
