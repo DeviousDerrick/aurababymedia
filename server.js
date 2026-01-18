@@ -59,3 +59,18 @@ app.get("*", (req, res) => {
 });
 
 app.listen(PORT, () => console.log("Aurababy Media running on port", PORT));
+
+// Show season details (episodes)
+app.get("/api/show/:id/season/:seasonNumber", async (req, res) => {
+  const { id, seasonNumber } = req.params;
+  try {
+    const r = await fetch(
+      `https://api.themoviedb.org/3/tv/${id}/season/${seasonNumber}?api_key=${TMDB_KEY}`
+    );
+    const data = await r.json();
+    res.json(data); // includes episodes array
+  } catch {
+    res.status(500).json({ error: "Failed to fetch season details" });
+  }
+});
+
