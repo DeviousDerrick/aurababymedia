@@ -1,156 +1,195 @@
 // ================= CONFIG =================
-const PROXY = "https://aurababy-proxy2.onrender.com/scramjet/";
+const PROXY = "https://aurababy-proxy2.onrender.com/";
+const TMDB_BASE = "https://api.themoviedb.org/3";
 const IMG = "https://image.tmdb.org/t/p/w500";
 
+// ⚠️ ONLY USE THIS IF YOU ARE NOT PROXYING TMDB THROUGH BACKEND
+// const TMDB_API_KEY = "YOUR_KEY_HERE";
+
 // ================= HELPERS =================
-const $ = id => document.getElementById(id);
+function qs(id) {
+  return document.getElementById(id);
+}
 
 function proxify(url) {
   return PROXY + encodeURIComponent(url);
 }
 
-function playIframe(url) {
-  const player = $("playerContainer");
-  if (!player) return;
-
-  player.innerHTML = `
-    <iframe
-      src="${proxify(url)}"
-      allow="autoplay; fullscreen"
-      allowfullscreen
-      referrerpolicy="no-referrer"
-    ></iframe>
-  `;
-
-  player.scrollIntoView({ behavior: "smooth" });
+function clearPlayer() {
+  qs("playerContainer").innerHTML = "";
 }
 
-// ================= LOAD MOVIES =================
-async function loadMovies(query = "") {
-  const moviesDiv = $("movies");
-  moviesDiv.textContent = "Loading movies...";
+// ================= PLAYER =================
+function playYouTube(videoId) {
+  qs("playerContainer").innerHTML = `
+    <iframe
+      src="https://www.youtube.com/embed/${videoId}?autoplay=1"
+      allow="autoplay; fullscreen"
+      allowfullscreen
+    ></iframe>
+  `;
+}
 
-  const url = query
-    ? `/api/search?q=${encodeURIComponent(query)}`
-    : `/api/popular`;
-
-  const res = await fetch(url);
+// ================= GET TRAILER =================
+async function getTrailer(type, id) {
+  const res = await fetch(
+    `${TMDB_BASE}/${type}/${id}/videos?api_key=${TMDB_API_KEY}`
+  );
   const data = await res.json();
 
-  moviesDiv.innerHTML = "";
+  const trailer = data.results.find(
+    v => v.site === "YouTube" && v.type === "Trailer"
+  );
 
-  data.results?.forEach(movie => {
-    if (!movie.poster_path) return;
+  if (!trailer) {
+    alert("No trailer available");
+    return;
+  }
 
+  playYouTube(trailer.key);
+}
+
+// ================= MOVIES =================
+async function loadMovies() {
+  const res = await fetch(
+    `${TMDB_BASE}/movie/popular?api_key=${TMDB_API_KEY}`
+  );
+  const data = await res.json();
+
+  qs("movies").innerHTML = "";
+
+  data.results.forEach(movie => {
     const div = document.createElement("div");
     div.className = "movie";
     div.innerHTML = `
       <img src="${IMG + movie.poster_path}">
       <p>${movie.title}</p>
-      <button class="playBtn">Play</button>
+      <button class="playBtn">Watch Trailer</button>
     `;
 
     div.querySelector("button").onclick = () => {
-      playIframe(`https://vidfast.pro/movie/${movie.id}?autoPlay=true`);
+      getTrailer("movie", movie.id);
     };
 
-    moviesDiv.appendChild(div);
+    qs("movies").appendChild(div);
   });
 }
 
-// ================= LOAD SHOWS =================
-async function loadShows(query = "") {
-  const showsDiv = $("shows");
-  showsDiv.textContent = "Loading shows...";
-
-  const url = query
-    ? `/api/search-shows?q=${encodeURIComponent(query)}`
-    : `/api/popular-shows`;
-
-  const res = await fetch(url);
+// ================= SHOWS =================
+async function loadShows() {
+  const res = await fetch(
+    `${TMDB_BASE}/tv/popular?api_key=${TMDB_API_KEY}`
+  );
   const data = await res.json();
 
-  showsDiv.innerHTML = "";
+  qs("shows").innerHTML = "";
 
-  data.results?.forEach(show => {
-    if (!show.poster_path) return;
-
+  data.results.forEach(show => {
     const div = document.createElement("div");
     div.className = "movie";
     div.innerHTML = `
       <img src="${IMG + show.poster_path}">
       <p>${show.name}</p>
-      <button class="playBtn">View</button>
+      <button class="playBtn">View Seasons</button>
     `;
 
     div.querySelector("button").onclick = () => {
       loadSeasons(show.id);
     };
 
-    showsDiv.appendChild(div);
+    qs("shows").appendChild(div);
   });
 }
 
 // ================= SEASONS =================
 async function loadSeasons(showId) {
-  const seasonBox = $("seasonContainer");
-  const episodeBox = $("episodeContainer");
+  clearPlayer();
 
-  seasonBox.innerHTML = "<p>Seasons</p>";
-  episodeBox.innerHTML = "<p>Episodes</p>";
-
-  const res = await fetch(`/api/show/${showId}`);
+  const res = await fetch(
+    `${TMDB_BASE}/tv/${showId}?api_key=${TMDB_API_KEY}`
+  );
   const data = await res.json();
+
+  qs("seasonContainer").innerHTML = "<h3>Seasons</h3>";
+  qs("episodeContainer").innerHTML = "";
 
   data.seasons.forEach(season => {
     if (season.season_number === 0) return;
 
     const btn = document.createElement("button");
     btn.textContent = `Season ${season.season_number}`;
-    btn.onclick = () => loadEpisodes(showId, season.season_number);
+    btn.onclick = () =>
+      loadEpisodes(showId, season.season_number);
 
-    seasonBox.appendChild(btn);
+    qs("seasonContainer").appendChild(btn);
   });
-
-  // Auto-load Season 1
-  loadEpisodes(showId, 1);
 }
 
 // ================= EPISODES =================
 async function loadEpisodes(showId, seasonNum) {
-  const episodeBox = $("episodeContainer");
-  episodeBox.innerHTML = "<p>Episodes</p>";
-
-  const res = await fetch(`/api/show/${showId}/season/${seasonNum}`);
+  const res = await fetch(
+    `${TMDB_BASE}/tv/${showId}/season/${seasonNum}?api_key=${TMDB_API_KEY}`
+  );
   const data = await res.json();
+
+  qs("episodeContainer").innerHTML = "<h3>Episodes</h3>";
 
   data.episodes.forEach(ep => {
     const btn = document.createElement("button");
-    btn.textContent = `E${ep.episode_number}`;
+    btn.textContent = `E${ep.episode_number} – Trailer`;
     btn.onclick = () => {
-      playIframe(
-        `https://vidfast.pro/tv/${showId}/${seasonNum}/${ep.episode_number}?autoPlay=true`
-      );
+      getTrailer("tv", showId);
     };
-
-    episodeBox.appendChild(btn);
+    qs("episodeContainer").appendChild(btn);
   });
 }
 
 // ================= SEARCH =================
-$("searchBtn").onclick = () => {
-  const q = $("searchInput").value.trim();
-  loadMovies(q);
-  loadShows(q);
-};
+qs("searchBtn").onclick = async () => {
+  const q = qs("searchInput").value.trim();
+  if (!q) return;
 
-$("searchInput").addEventListener("keydown", e => {
-  if (e.key === "Enter") {
-    const q = $("searchInput").value.trim();
-    loadMovies(q);
-    loadShows(q);
-  }
-});
+  qs("movies").innerHTML = "";
+  qs("shows").innerHTML = "";
+
+  const movieRes = await fetch(
+    `${TMDB_BASE}/search/movie?api_key=${TMDB_API_KEY}&query=${encodeURIComponent(q)}`
+  );
+  const showRes = await fetch(
+    `${TMDB_BASE}/search/tv?api_key=${TMDB_API_KEY}&query=${encodeURIComponent(q)}`
+  );
+
+  const movies = await movieRes.json();
+  const shows = await showRes.json();
+
+  movies.results.forEach(m => {
+    const div = document.createElement("div");
+    div.className = "movie";
+    div.innerHTML = `
+      <img src="${IMG + m.poster_path}">
+      <p>${m.title}</p>
+      <button class="playBtn">Trailer</button>
+    `;
+    div.querySelector("button").onclick = () =>
+      getTrailer("movie", m.id);
+
+    qs("movies").appendChild(div);
+  });
+
+  shows.results.forEach(s => {
+    const div = document.createElement("div");
+    div.className = "movie";
+    div.innerHTML = `
+      <img src="${IMG + s.poster_path}">
+      <p>${s.name}</p>
+      <button class="playBtn">Seasons</button>
+    `;
+    div.querySelector("button").onclick = () =>
+      loadSeasons(s.id);
+
+    qs("shows").appendChild(div);
+  });
+};
 
 // ================= INIT =================
 loadMovies();
