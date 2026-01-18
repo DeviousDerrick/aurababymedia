@@ -3,13 +3,13 @@ const showsContainer = document.getElementById("shows");
 const searchInput = document.getElementById("searchInput");
 const searchBtn = document.getElementById("searchBtn");
 
-const seasonContainer = document.getElementById("seasons");
-const episodeContainer = document.getElementById("episodes");
-const videoPlayer = document.getElementById("videoPlayer");
+const seasonContainer = document.getElementById("seasonContainer");
+const episodeContainer = document.getElementById("episodeContainer");
+const playerContainer = document.getElementById("playerContainer");
 
 /* ---------- PLAYER FUNCTIONS ---------- */
 function playMovie(movieId) {
-  videoPlayer.innerHTML = `
+  playerContainer.innerHTML = `
     <iframe src="https://aurababy-proxy2.onrender.com/embed/movie/${movieId}" 
             width="100%" height="100%" frameborder="0" allowfullscreen allow="autoplay; fullscreen"></iframe>
   `;
@@ -17,7 +17,7 @@ function playMovie(movieId) {
 
 async function loadShow(showId, season = 1, episode = 1) {
   // Load iframe for selected season/episode
-  videoPlayer.innerHTML = `
+  playerContainer.innerHTML = `
     <iframe src="https://aurababy-proxy2.onrender.com/embed/show/${showId}/${season}/${episode}" 
             width="100%" height="100%" frameborder="0" allowfullscreen allow="autoplay; fullscreen"></iframe>
   `;
@@ -27,7 +27,7 @@ async function loadShow(showId, season = 1, episode = 1) {
   const data = await res.json();
 
   // Populate seasons
-  seasonContainer.innerHTML = "";
+  seasonContainer.innerHTML = "<p>Seasons</p>";
   data.seasons.forEach(s => {
     if (!s.season_number) return;
     const btn = document.createElement("button");
@@ -42,18 +42,18 @@ async function loadShow(showId, season = 1, episode = 1) {
   loadEpisodes(showId, season);
 }
 
-async function loadEpisodes(showId, season) {
+async function loadEpisodes(showId, seasonNumber) {
   // Fetch episodes for the season
-  const res = await fetch(`/api/show/${showId}/season/${season}`);
+  const res = await fetch(`/api/show/${showId}/season/${seasonNumber}`);
   const data = await res.json();
 
-  episodeContainer.innerHTML = "";
+  episodeContainer.innerHTML = "<p>Episodes</p>";
   data.episodes.forEach(e => {
     const btn = document.createElement("button");
     btn.textContent = `Ep ${e.episode_number}: ${e.name}`;
     btn.style.display = "block";
     btn.style.width = "100%";
-    btn.onclick = () => loadShow(showId, season, e.episode_number);
+    btn.onclick = () => loadShow(showId, seasonNumber, e.episode_number);
     episodeContainer.appendChild(btn);
   });
 }
@@ -64,19 +64,32 @@ async function fetchAll(query = "") {
   showsContainer.textContent = "Loading shows...";
 
   try {
-    const movieURL = query ? `/api/search?q=${encodeURIComponent(query)}` : `/api/popular`;
-    const showURL = query ? `/api/search-shows?q=${encodeURIComponent(query)}` : `/api/popular-shows`;
+    // Movies
+    const movieURL = query
+      ? `/api/search?q=${encodeURIComponent(query)}`
+      : `/api/popular`;
 
-    const [movieRes, showRes] = await Promise.all([fetch(movieURL), fetch(showURL)]);
+    // Shows
+    const showURL = query
+      ? `/api/search-shows?q=${encodeURIComponent(query)}`
+      : `/api/popular-shows`;
+
+    // Fetch data
+    const [movieRes, showRes] = await Promise.all([
+      fetch(movieURL),
+      fetch(showURL),
+    ]);
+
     const movieData = await movieRes.json();
     const showData = await showRes.json();
 
     moviesContainer.innerHTML = "";
     showsContainer.innerHTML = "";
 
-    /* ---------- MOVIES ---------- */
+    // Populate movies
     movieData.results?.forEach(movie => {
       if (!movie.poster_path) return;
+
       const div = document.createElement("div");
       div.className = "movie";
       div.innerHTML = `
@@ -84,16 +97,19 @@ async function fetchAll(query = "") {
         <h3>${movie.title}</h3>
         <button class="playBtn">Play</button>
       `;
+
       div.querySelector(".playBtn").onclick = e => {
         e.stopPropagation();
         playMovie(movie.id);
       };
+
       moviesContainer.appendChild(div);
     });
 
-    /* ---------- SHOWS ---------- */
+    // Populate shows
     showData.results?.forEach(show => {
       if (!show.poster_path) return;
+
       const div = document.createElement("div");
       div.className = "movie";
       div.innerHTML = `
@@ -101,10 +117,12 @@ async function fetchAll(query = "") {
         <h3>${show.name}</h3>
         <button class="playBtn">Play</button>
       `;
+
       div.querySelector(".playBtn").onclick = e => {
         e.stopPropagation();
-        loadShow(show.id); // default: season 1, episode 1
+        loadShow(show.id); // Default season 1, episode 1
       };
+
       showsContainer.appendChild(div);
     });
 
@@ -119,4 +137,6 @@ async function fetchAll(query = "") {
 fetchAll();
 
 searchBtn.onclick = () => fetchAll(searchInput.value.trim());
-searchInput.addEventListener("keydown", e => { if (e.key === "Enter") fetchAll(searchInput.value.trim()); });
+searchInput.addEventListener("keydown", e => {
+  if (e.key === "Enter") fetchAll(searchInput.value.trim());
+});
