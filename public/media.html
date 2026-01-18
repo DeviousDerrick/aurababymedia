@@ -3,75 +3,117 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Aurababy Media</title>
-<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@800&display=swap" rel="stylesheet">
+<title>Aurababy Media Player</title>
 <style>
-  body {
-    margin: 0;
-    font-family: 'Poppins', sans-serif;
+  body, html {
+    margin: 0; padding: 0;
+    font-family: sans-serif;
     background: #000;
     color: white;
-  }
-  header {
     display: flex;
-    gap: 10px;
-    padding: 20px;
+    flex-direction: column;
+    height: 100%;
   }
-  input {
+  #playerContainer {
     flex: 1;
-    padding: 12px 20px;
-    font-size: 16px;
-    border-radius: 50px;
-    border: 2px solid #fff;
-    outline: none;
+    background: #000;
+    border-bottom: 2px solid #fff;
   }
-  button {
-    padding: 12px 24px;
-    font-size: 16px;
-    border-radius: 50px;
-    border: none;
-    cursor: pointer;
-    background: linear-gradient(135deg, #8a2be2 0%, #ff00ff 100%);
-    color: white;
-    font-weight: bold;
-  }
-  h2 { margin-left: 20px; }
-  #movies, #shows {
-    display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
-    gap: 20px;
-    padding: 20px;
-  }
-  .movie { text-align: center; }
-  .movie img {
+  #playerContainer iframe {
     width: 100%;
-    border-radius: 10px;
-  }
-  .playBtn {
-    margin-top: 8px;
-    padding: 6px 14px;
-    border-radius: 12px;
+    height: 100%;
     border: none;
-    background: #ff00ff;
-    cursor: pointer;
-    font-weight: bold;
   }
-  .seasons, .episodes { margin-top: 5px; }
+  #controls {
+    padding: 10px 20px;
+    background: #111;
+    max-height: 300px;
+    overflow-y: auto;
+  }
+  .season-btn, .episode-btn {
+    display: block;
+    margin: 4px 0;
+    padding: 6px 10px;
+    border-radius: 6px;
+    border: 1px solid #fff;
+    background: #222;
+    color: white;
+    cursor: pointer;
+    text-align: left;
+    transition: 0.2s;
+  }
+  .season-btn:hover, .episode-btn:hover { background: #ff00ff; border-color: #ff00ff; }
+  h3 { margin: 10px 0 5px; }
 </style>
 </head>
 <body>
 
-<header>
-  <input id="searchInput" placeholder="Search movies or shows..." />
-  <button id="searchBtn">Search</button>
-</header>
+<div id="playerContainer">
+  <iframe id="media-frame" src="about:blank" allowfullscreen></iframe>
+</div>
 
-<h2>Movies</h2>
-<div id="movies">Loading movies...</div>
+<div id="controls">
+  <h3>Seasons</h3>
+  <div id="seasonsContainer"></div>
+  <h3>Episodes</h3>
+  <div id="episodesContainer"></div>
+</div>
 
-<h2>Shows</h2>
-<div id="shows">Loading shows...</div>
+<script>
+(async () => {
+  const PROXY = "https://aurababy-proxy2.onrender.com/scramjet/";
 
-<script src="script.js"></script>
+  const params = new URLSearchParams(window.location.search);
+  const src = params.get("src");
+  const isTV = params.get("tv"); 
+  const showId = params.get("id");
+
+  const iframe = document.getElementById("media-frame");
+  const seasonsContainer = document.getElementById("seasonsContainer");
+  const episodesContainer = document.getElementById("episodesContainer");
+
+  if (!src) {
+    iframe.parentElement.innerHTML = "<p style='color:white;text-align:center;'>No media URL provided.</p>";
+    return;
+  }
+
+  function proxyUrl(url) { return PROXY + encodeURIComponent(url); }
+  iframe.src = proxyUrl(src);
+
+  if (isTV && showId) {
+    const res = await fetch(`/api/show/${showId}`);
+    const data = await res.json();
+
+    data.seasons?.forEach(season => {
+      if (season.season_number === 0) return;
+      const btn = document.createElement("button");
+      btn.className = "season-btn";
+      btn.textContent = `Season ${season.season_number}`;
+      btn.onclick = () => loadEpisodes(showId, season.season_number);
+      seasonsContainer.appendChild(btn);
+    });
+
+    loadEpisodes(showId, 1);
+  }
+
+  async function loadEpisodes(showId, seasonNum) {
+    episodesContainer.innerHTML = "";
+    const res = await fetch(`/api/show/${showId}/season/${seasonNum}`);
+    const data = await res.json();
+
+    data.episodes?.forEach(ep => {
+      const btn = document.createElement("button");
+      btn.className = "episode-btn";
+      btn.textContent = `E${ep.episode_number}: ${ep.name}`;
+      btn.onclick = () => {
+        const episodeUrl = `https://cinemaos.tech/player/tv/${showId}/${seasonNum}/${ep.episode_number}`;
+        iframe.src = proxyUrl(episodeUrl);
+      };
+      episodesContainer.appendChild(btn);
+    });
+  }
+})();
+</script>
+
 </body>
 </html>
