@@ -1,14 +1,14 @@
 // ================= CONFIG =================
-const CINEMAOS_BASE = "https://cinemaos.tech/player/"; // CinemaOS player base URL
+const CINEMAOS_BASE = "https://cinemaos.tech/player/"; // CinemaOS base URL
 const IMG = "https://image.tmdb.org/t/p/w500";
 
 // ================= HELPERS =================
 const $ = id => document.getElementById(id);
 
-// Redirect to media.html with CinemaOS
-function playIframe(tmdbId) {
-  const cinemaUrl = `${CINEMAOS_BASE}${tmdbId}`;
-  window.location.href = `media.html?src=${encodeURIComponent(cinemaUrl)}`;
+// Redirect to media.html with CinemaOS URL
+function playIframe(url) {
+  const fullUrl = `${url}`;
+  window.location.href = `media.html?src=${encodeURIComponent(fullUrl)}`;
 }
 
 // ================= MOVIES =================
@@ -37,8 +37,9 @@ async function loadMovies(query = "") {
     `;
 
     div.querySelector("button").onclick = () => {
-      // Use CinemaOS link
-      playIframe(movie.id);
+      // CinemaOS link for movie
+      const movieUrl = `${CINEMAOS_BASE}movie/${movie.id}`;
+      playIframe(movieUrl);
     };
 
     moviesDiv.appendChild(div);
@@ -68,66 +69,73 @@ async function loadShows(query = "") {
       <img src="${IMG + show.poster_path}">
       <p>${show.name}</p>
       <button class="playBtn">Watch</button>
+      <div class="seasons" id="seasons-${show.id}"></div>
     `;
 
-    div.querySelector("button").onclick = () => {
-      // Play show via CinemaOS (first season/episode)
-      playIframe(show.id);
-      loadSeasons(show.id);
+    div.querySelector("button").onclick = async () => {
+      // Play first episode by default
+      const defaultUrl = `${CINEMAOS_BASE}tv/${show.id}/1/1`;
+      playIframe(defaultUrl);
+      await loadSeasons(show.id, div.querySelector(`#seasons-${show.id}`));
     };
 
     showsDiv.appendChild(div);
   });
 }
 
-// ================= PLAY SHOW =================
-function playShow(showId, season, episode) {
-  // CinemaOS currently just uses show ID; can add season/episode if supported
-  playIframe(showId);
-}
-
-// ================= SEASONS =================
-async function loadSeasons(showId) {
-  const seasonBox = $("seasonContainer");
-  const episodeBox = $("episodeContainer");
-
-  if (!seasonBox || !episodeBox) return;
-
-  seasonBox.innerHTML = "<p>Seasons</p>";
-  episodeBox.innerHTML = "<p>Episodes</p>";
+// ================= LOAD SEASONS =================
+async function loadSeasons(showId, container) {
+  container.innerHTML = "Loading seasons...";
 
   const res = await fetch(`/api/show/${showId}`);
   const data = await res.json();
 
+  container.innerHTML = "";
+
   data.seasons?.forEach(season => {
     if (season.season_number === 0) return;
 
-    const btn = document.createElement("button");
-    btn.textContent = `Season ${season.season_number}`;
-    btn.onclick = () => loadEpisodes(showId, season.season_number);
+    const seasonBtn = document.createElement("button");
+    seasonBtn.textContent = `Season ${season.season_number}`;
+    seasonBtn.style.marginRight = "5px";
 
-    seasonBox.appendChild(btn);
+    seasonBtn.onclick = () => loadEpisodes(showId, season.season_number, container);
+
+    container.appendChild(seasonBtn);
   });
 
-  loadEpisodes(showId, 1);
+  // Auto-load first season episodes
+  loadEpisodes(showId, 1, container);
 }
 
-// ================= EPISODES =================
-async function loadEpisodes(showId, seasonNum) {
-  const episodeBox = $("episodeContainer");
-  if (!episodeBox) return;
-
-  episodeBox.innerHTML = "<p>Episodes</p>";
+// ================= LOAD EPISODES =================
+async function loadEpisodes(showId, seasonNum, container) {
+  // Create episode container
+  let episodeContainer = container.querySelector(".episodes");
+  if (!episodeContainer) {
+    episodeContainer = document.createElement("div");
+    episodeContainer.className = "episodes";
+    episodeContainer.style.marginTop = "5px";
+    container.appendChild(episodeContainer);
+  }
+  episodeContainer.innerHTML = "";
 
   const res = await fetch(`/api/show/${showId}/season/${seasonNum}`);
   const data = await res.json();
 
   data.episodes?.forEach(ep => {
-    const btn = document.createElement("button");
-    btn.textContent = `E${ep.episode_number}`;
-    btn.onclick = () => playShow(showId, seasonNum, ep.episode_number);
+    const epBtn = document.createElement("button");
+    epBtn.textContent = `E${ep.episode_number}: ${ep.name}`;
+    epBtn.style.display = "block";
+    epBtn.style.marginTop = "2px";
+    epBtn.style.fontSize = "12px";
 
-    episodeBox.appendChild(btn);
+    epBtn.onclick = () => {
+      const episodeUrl = `${CINEMAOS_BASE}tv/${showId}/${seasonNum}/${ep.episode_number}`;
+      playIframe(episodeUrl);
+    };
+
+    episodeContainer.appendChild(epBtn);
   });
 }
 
