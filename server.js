@@ -1,117 +1,110 @@
-import express from "express";
-import fetch from "node-fetch";
-import path from "path";
-import { fileURLToPath } from "url";
+const moviesContainer = document.getElementById("movies");
+const showsContainer = document.getElementById("shows");
+const searchInput = document.getElementById("searchInput");
+const searchBtn = document.getElementById("searchBtn");
+const playerContainer = document.getElementById("playerContainer");
 
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
+/* ---------- PLAYER ---------- */
+function playMovie(movieId) {
+  const iframe = document.createElement("iframe");
+  iframe.src = `https://vidfast.net/movie/${movieId}?autoPlay=true`;
+  iframe.allowFullscreen = true;
+  iframe.allow = "autoplay; fullscreen";
+  iframe.style.width = "100%";
+  iframe.style.height = "100%";
+  iframe.frameBorder = 0;
 
-const app = express();
-const PORT = process.env.PORT || 3000;
-const TMDB_KEY = process.env.TMDB_KEY;
+  playerContainer.innerHTML = "";
+  playerContainer.appendChild(iframe);
+  playerContainer.scrollIntoView({ behavior: "smooth" });
+}
 
-// Serve frontend
-app.use(express.static(path.join(__dirname, "public")));
+function playShow(showId, season = 1, episode = 1) {
+  const iframe = document.createElement("iframe");
+  iframe.src = `https://vidfast.net/tv/${showId}/${season}/${episode}?autoPlay=true`;
+  iframe.allowFullscreen = true;
+  iframe.allow = "autoplay; fullscreen";
+  iframe.style.width = "100%";
+  iframe.style.height = "100%";
+  iframe.frameBorder = 0;
 
-// Debug
-app.get("/debug", (req, res) => {
-  res.json({ tmdbKeyLoaded: !!TMDB_KEY });
-});
+  playerContainer.innerHTML = "";
+  playerContainer.appendChild(iframe);
+  playerContainer.scrollIntoView({ behavior: "smooth" });
+}
 
-/* ---------- API ROUTES (DO NOT MOVE) ---------- */
+/* ---------- FETCH ---------- */
+async function fetchAll(query = "") {
+  moviesContainer.textContent = "Loading movies...";
+  showsContainer.textContent = "Loading shows...";
 
-// Popular movies
-app.get("/api/popular", async (req, res) => {
   try {
-    const r = await fetch(
-      `https://api.themoviedb.org/3/movie/popular?api_key=${TMDB_KEY}`
-    );
-    res.json(await r.json());
-  } catch {
-    res.status(500).json({ error: "Failed to fetch movies" });
+    const movieURL = query
+      ? `/api/search?q=${encodeURIComponent(query)}`
+      : `/api/popular`;
+
+    const showURL = query
+      ? `/api/search-shows?q=${encodeURIComponent(query)}`
+      : `/api/popular-shows`;
+
+    const [movieRes, showRes] = await Promise.all([
+      fetch(movieURL),
+      fetch(showURL)
+    ]);
+
+    const movieData = await movieRes.json();
+    const showData = await showRes.json();
+
+    moviesContainer.innerHTML = "";
+    showsContainer.innerHTML = "";
+
+    /* ---------- Movies ---------- */
+    movieData.results?.forEach(movie => {
+      if (!movie.poster_path) return;
+
+      const div = document.createElement("div");
+      div.className = "movie";
+      div.innerHTML = `
+        <img src="https://image.tmdb.org/t/p/w300${movie.poster_path}">
+        <h3>${movie.title}</h3>
+        <button class="playBtn">Play</button>
+      `;
+      div.querySelector(".playBtn").onclick = e => {
+        e.stopPropagation();
+        playMovie(movie.id);
+      };
+      moviesContainer.appendChild(div);
+    });
+
+    /* ---------- Shows ---------- */
+    showData.results?.forEach(show => {
+      if (!show.poster_path) return;
+
+      const div = document.createElement("div");
+      div.className = "movie";
+      div.innerHTML = `
+        <img src="https://image.tmdb.org/t/p/w300${show.poster_path}">
+        <h3>${show.name}</h3>
+        <button class="playBtn">Play</button>
+      `;
+      div.querySelector(".playBtn").onclick = e => {
+        e.stopPropagation();
+        playShow(show.id); // default season 1 episode 1
+      };
+      showsContainer.appendChild(div);
+    });
+
+  } catch (err) {
+    console.error(err);
+    moviesContainer.textContent = "Failed to load movies.";
+    showsContainer.textContent = "Failed to load shows.";
   }
-});
+}
 
-// Search movies
-app.get("/api/search", async (req, res) => {
-  const q = req.query.q || "";
-  try {
-    const r = await fetch(
-      `https://api.themoviedb.org/3/search/movie?api_key=${TMDB_KEY}&query=${encodeURIComponent(q)}`
-    );
-    res.json(await r.json());
-  } catch {
-    res.status(500).json({ error: "Search failed" });
-  }
-});
+/* ---------- INIT ---------- */
+fetchAll();
 
-// Search shows
-app.get("/api/search-shows", async (req, res) => {
-  const q = req.query.q || "";
-  try {
-    const r = await fetch(
-      `https://api.themoviedb.org/3/search/tv?api_key=${TMDB_KEY}&query=${encodeURIComponent(q)}`
-    );
-    res.json(await r.json());
-  } catch {
-    res.status(500).json({ error: "Search shows failed" });
-  }
-});
-
-
-// Popular shows
-app.get("/api/popular-shows", async (req, res) => {
-  try {
-    const r = await fetch(
-      `https://api.themoviedb.org/3/tv/popular?api_key=${TMDB_KEY}`
-    );
-    res.json(await r.json());
-  } catch {
-    res.status(500).json({ error: "Failed to fetch shows" });
-  }
-});
-
-// Popular anime
-app.get("/api/popular-anime", async (req, res) => {
-  try {
-    const r = await fetch(
-      `https://api.themoviedb.org/3/discover/tv?api_key=${TMDB_KEY}&with_genres=16&sort_by=popularity.desc`
-    );
-    res.json(await r.json());
-  } catch {
-    res.status(500).json({ error: "Failed to fetch anime" });
-  }
-});
-
-// Movie details
-app.get("/api/movie/:id", async (req, res) => {
-  try {
-    const r = await fetch(
-      `https://api.themoviedb.org/3/movie/${req.params.id}?api_key=${TMDB_KEY}`
-    );
-    res.json(await r.json());
-  } catch {
-    res.status(500).json({ error: "Movie details failed" });
-  }
-});
-
-// Show / anime details
-app.get("/api/show/:id", async (req, res) => {
-  try {
-    const r = await fetch(
-      `https://api.themoviedb.org/3/tv/${req.params.id}?api_key=${TMDB_KEY}`
-    );
-    res.json(await r.json());
-  } catch {
-    res.status(500).json({ error: "Show details failed" });
-  }
-});
-
-/* ---------- FALLBACK (ALWAYS LAST) ---------- */
-app.get("*", (req, res) => {
-  res.sendFile(path.join(__dirname, "public/index.html"));
-});
-
-app.listen(PORT, () => {
-  console.log("Aurababy Media running on port", PORT);
+searchBtn.onclick = () => fetchAll(searchInput.value.trim());
+searchInput.addEventListener("keydown", e => {
+  if (e.key === "Enter") fetchAll(searchInput.value.trim());
 });
