@@ -1,92 +1,138 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Aurababy Media Player</title>
-  <style>
-    body, html {
-      margin: 0;
-      padding: 0;
-      height: 100%;
-      background: #000;
-      font-family: sans-serif;
-      display: flex;
-      flex-direction: column;
-    }
-    .player-container {
-      flex: 1;
-      position: relative;
-      margin: 20px;
-      border-radius: 15px;
-      overflow: hidden;
-      background: #111;
-      box-shadow: 0 5px 20px rgba(0,0,0,0.5);
-    }
-    iframe {
-      width: 100%;
-      height: 100%;
-      border: none;
-    }
-    .loading-overlay {
-      position: absolute;
-      inset: 0;
-      background: rgba(0,0,0,0.8);
-      color: #fff;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      flex-direction: column;
-      font-size: 16px;
-      z-index: 10;
-    }
-    .controls {
-      margin: 10px 20px;
-      display: flex;
-      justify-content: flex-start;
-      gap: 10px;
-    }
-    button {
-      padding: 8px 16px;
-      border-radius: 10px;
-      border: none;
-      background: #ff00ff;
-      color: white;
-      cursor: pointer;
-      font-weight: bold;
-    }
-  </style>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Aurababy Media Player</title>
+
+<style>
+  body, html {
+    margin: 0;
+    padding: 0;
+    font-family: sans-serif;
+    background: #000;
+    color: white;
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+  }
+
+  /* Player iframe */
+  #playerContainer {
+    flex: 1;
+    background: #000;
+    border-bottom: 2px solid #fff;
+  }
+
+  #playerContainer iframe {
+    width: 100%;
+    height: 100%;
+    border: none;
+  }
+
+  /* Controls panel */
+  #controls {
+    padding: 10px 20px;
+    background: #111;
+    max-height: 300px;
+    overflow-y: auto;
+  }
+
+  .season-btn, .episode-btn {
+    display: block;
+    margin: 4px 0;
+    padding: 6px 10px;
+    border-radius: 6px;
+    border: 1px solid #fff;
+    background: #222;
+    color: white;
+    cursor: pointer;
+    text-align: left;
+    transition: 0.2s;
+  }
+
+  .season-btn:hover, .episode-btn:hover {
+    background: #ff00ff;
+    border-color: #ff00ff;
+  }
+
+  h3 {
+    margin: 10px 0 5px;
+  }
+</style>
 </head>
 <body>
-  <div class="player-container">
-    <div id="loading" class="loading-overlay">
-      Loading media...
-    </div>
-    <iframe id="player" src="about:blank" allowfullscreen></iframe>
-  </div>
 
-  <div class="controls">
-    <button id="reload">Reload</button>
-  </div>
+<!-- Player -->
+<div id="playerContainer">
+  <iframe id="media-frame" src="about:blank" allowfullscreen></iframe>
+</div>
 
-  <script>
-    const params = new URLSearchParams(window.location.search);
-    const src = params.get("src");
-    const player = document.getElementById("player");
-    const loading = document.getElementById("loading");
-    const reloadBtn = document.getElementById("reload");
+<!-- Controls: seasons + episodes -->
+<div id="controls">
+  <h3>Seasons</h3>
+  <div id="seasonsContainer"></div>
+  <h3>Episodes</h3>
+  <div id="episodesContainer"></div>
+</div>
 
-    if (!src) {
-      loading.textContent = "No media URL provided.";
-    } else {
-      player.src = src;
-      player.onload = () => loading.style.display = "none";
-    }
+<script>
+(async () => {
+  const params = new URLSearchParams(window.location.search);
+  const src = params.get("src");
+  const isTV = params.get("tv"); // optional: if tv show
 
-    reloadBtn.onclick = () => {
-      loading.style.display = "flex";
-      player.src = src;
-    };
-  </script>
+  const iframe = document.getElementById("media-frame");
+  const seasonsContainer = document.getElementById("seasonsContainer");
+  const episodesContainer = document.getElementById("episodesContainer");
+
+  if (!src) {
+    iframe.parentElement.innerHTML = "<p style='color:white;text-align:center;'>No media URL provided.</p>";
+    return;
+  }
+
+  iframe.src = src;
+
+  // ================= SHOW SEASONS & EPISODES =================
+  if (isTV) {
+    const showId = params.get("id"); // pass show ID via URL query
+    const res = await fetch(`/api/show/${showId}`);
+    const data = await res.json();
+
+    // Load seasons
+    data.seasons?.forEach(season => {
+      if (season.season_number === 0) return;
+      const btn = document.createElement("button");
+      btn.className = "season-btn";
+      btn.textContent = `Season ${season.season_number}`;
+      btn.onclick = () => loadEpisodes(showId, season.season_number);
+      seasonsContainer.appendChild(btn);
+    });
+
+    // Auto-load Season 1 episodes
+    loadEpisodes(showId, 1);
+  }
+
+  // ================= LOAD EPISODES FUNCTION =================
+  async function loadEpisodes(showId, seasonNum) {
+    episodesContainer.innerHTML = "";
+    const res = await fetch(`/api/show/${showId}/season/${seasonNum}`);
+    const data = await res.json();
+
+    data.episodes?.forEach(ep => {
+      const btn = document.createElement("button");
+      btn.className = "episode-btn";
+      btn.textContent = `E${ep.episode_number}: ${ep.name}`;
+      btn.onclick = () => {
+        // Build CinemaOS URL for that episode
+        const episodeUrl = `https://cinemaos.tech/player/tv/${showId}/${seasonNum}/${ep.episode_number}`;
+        iframe.src = episodeUrl;
+      };
+      episodesContainer.appendChild(btn);
+    });
+  }
+})();
+</script>
+
 </body>
 </html>
