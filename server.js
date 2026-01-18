@@ -1,110 +1,61 @@
-const moviesContainer = document.getElementById("movies");
-const showsContainer = document.getElementById("shows");
-const searchInput = document.getElementById("searchInput");
-const searchBtn = document.getElementById("searchBtn");
-const playerContainer = document.getElementById("playerContainer");
+import express from "express";
+import fetch from "node-fetch";
+import path from "path";
+import { fileURLToPath } from "url";
 
-/* ---------- PLAYER ---------- */
-function playMovie(movieId) {
-  const iframe = document.createElement("iframe");
-  iframe.src = `https://vidfast.net/movie/${movieId}?autoPlay=true`;
-  iframe.allowFullscreen = true;
-  iframe.allow = "autoplay; fullscreen";
-  iframe.style.width = "100%";
-  iframe.style.height = "100%";
-  iframe.frameBorder = 0;
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
-  playerContainer.innerHTML = "";
-  playerContainer.appendChild(iframe);
-  playerContainer.scrollIntoView({ behavior: "smooth" });
-}
+const app = express();
+const PORT = process.env.PORT || 3000;
+const TMDB_KEY = process.env.TMDB_KEY;
 
-function playShow(showId, season = 1, episode = 1) {
-  const iframe = document.createElement("iframe");
-  iframe.src = `https://vidfast.net/tv/${showId}/${season}/${episode}?autoPlay=true`;
-  iframe.allowFullscreen = true;
-  iframe.allow = "autoplay; fullscreen";
-  iframe.style.width = "100%";
-  iframe.style.height = "100%";
-  iframe.frameBorder = 0;
+// Serve frontend
+app.use(express.static(path.join(__dirname, "public")));
 
-  playerContainer.innerHTML = "";
-  playerContainer.appendChild(iframe);
-  playerContainer.scrollIntoView({ behavior: "smooth" });
-}
+/* ---------- API ROUTES ---------- */
 
-/* ---------- FETCH ---------- */
-async function fetchAll(query = "") {
-  moviesContainer.textContent = "Loading movies...";
-  showsContainer.textContent = "Loading shows...";
-
-  try {
-    const movieURL = query
-      ? `/api/search?q=${encodeURIComponent(query)}`
-      : `/api/popular`;
-
-    const showURL = query
-      ? `/api/search-shows?q=${encodeURIComponent(query)}`
-      : `/api/popular-shows`;
-
-    const [movieRes, showRes] = await Promise.all([
-      fetch(movieURL),
-      fetch(showURL)
-    ]);
-
-    const movieData = await movieRes.json();
-    const showData = await showRes.json();
-
-    moviesContainer.innerHTML = "";
-    showsContainer.innerHTML = "";
-
-    /* ---------- Movies ---------- */
-    movieData.results?.forEach(movie => {
-      if (!movie.poster_path) return;
-
-      const div = document.createElement("div");
-      div.className = "movie";
-      div.innerHTML = `
-        <img src="https://image.tmdb.org/t/p/w300${movie.poster_path}">
-        <h3>${movie.title}</h3>
-        <button class="playBtn">Play</button>
-      `;
-      div.querySelector(".playBtn").onclick = e => {
-        e.stopPropagation();
-        playMovie(movie.id);
-      };
-      moviesContainer.appendChild(div);
-    });
-
-    /* ---------- Shows ---------- */
-    showData.results?.forEach(show => {
-      if (!show.poster_path) return;
-
-      const div = document.createElement("div");
-      div.className = "movie";
-      div.innerHTML = `
-        <img src="https://image.tmdb.org/t/p/w300${show.poster_path}">
-        <h3>${show.name}</h3>
-        <button class="playBtn">Play</button>
-      `;
-      div.querySelector(".playBtn").onclick = e => {
-        e.stopPropagation();
-        playShow(show.id); // default season 1 episode 1
-      };
-      showsContainer.appendChild(div);
-    });
-
-  } catch (err) {
-    console.error(err);
-    moviesContainer.textContent = "Failed to load movies.";
-    showsContainer.textContent = "Failed to load shows.";
-  }
-}
-
-/* ---------- INIT ---------- */
-fetchAll();
-
-searchBtn.onclick = () => fetchAll(searchInput.value.trim());
-searchInput.addEventListener("keydown", e => {
-  if (e.key === "Enter") fetchAll(searchInput.value.trim());
+// Popular movies
+app.get("/api/popular", async (req, res) => {
+  const r = await fetch(`https://api.themoviedb.org/3/movie/popular?api_key=${TMDB_KEY}`);
+  res.json(await r.json());
 });
+
+// Search movies
+app.get("/api/search", async (req, res) => {
+  const q = req.query.q || "";
+  const r = await fetch(`https://api.themoviedb.org/3/search/movie?api_key=${TMDB_KEY}&query=${encodeURIComponent(q)}`);
+  res.json(await r.json());
+});
+
+// Popular shows
+app.get("/api/popular-shows", async (req, res) => {
+  const r = await fetch(`https://api.themoviedb.org/3/tv/popular?api_key=${TMDB_KEY}`);
+  res.json(await r.json());
+});
+
+// Search shows
+app.get("/api/search-shows", async (req, res) => {
+  const q = req.query.q || "";
+  const r = await fetch(`https://api.themoviedb.org/3/search/tv?api_key=${TMDB_KEY}&query=${encodeURIComponent(q)}`);
+  res.json(await r.json());
+});
+
+// Movie details
+app.get("/api/movie/:id", async (req, res) => {
+  const r = await fetch(`https://api.themoviedb.org/3/movie/${req.params.id}?api_key=${TMDB_KEY}`);
+  res.json(await r.json());
+});
+
+// Show / anime details
+app.get("/api/show/:id", async (req, res) => {
+  const r = await fetch(`https://api.themoviedb.org/3/tv/${req.params.id}?api_key=${TMDB_KEY}`);
+  res.json(await r.json());
+});
+
+/* ---------- FALLBACK (ALWAYS LAST) ---------- */
+app.get("*", (req, res) => {
+  res.sendFile(path.join(__dirname, "public/index.html"));
+});
+
+app.listen(PORT, () => console.log("Aurababy Media running on port", PORT));
