@@ -5,9 +5,9 @@ const searchBtn = document.getElementById("searchBtn");
 const playerContainer = document.getElementById("playerContainer");
 
 /* ---------- PLAYER ---------- */
-function playMovie(id) {
+function playMovie(movieId) {
   const iframe = document.createElement("iframe");
-  iframe.src = `https://vidfast.net/embed/movie/${id}`;
+  iframe.src = `https://vidfast.net/movie/${movieId}?autoPlay=true`;
   iframe.allowFullscreen = true;
   iframe.allow = "autoplay; fullscreen";
   iframe.style.width = "100%";
@@ -19,9 +19,9 @@ function playMovie(id) {
   playerContainer.scrollIntoView({ behavior: "smooth" });
 }
 
-function playShow(id) {
+function playShow(showId, season = 1, episode = 1) {
   const iframe = document.createElement("iframe");
-  iframe.src = `https://vidfast.net/embed/tv/${id}/1/1`; // default S1E1
+  iframe.src = `https://vidfast.net/tv/${showId}/${season}/${episode}?autoPlay=true`;
   iframe.allowFullscreen = true;
   iframe.allow = "autoplay; fullscreen";
   iframe.style.width = "100%";
@@ -58,7 +58,7 @@ async function fetchAll(query = "") {
     moviesContainer.innerHTML = "";
     showsContainer.innerHTML = "";
 
-    /* Movies */
+    /* ---------- Movies ---------- */
     movieData.results?.forEach(movie => {
       if (!movie.poster_path) return;
 
@@ -69,14 +69,14 @@ async function fetchAll(query = "") {
         <h3>${movie.title}</h3>
         <button class="playBtn">Play</button>
       `;
-      div.querySelector("button").onclick = e => {
+      div.querySelector(".playBtn").onclick = e => {
         e.stopPropagation();
         playMovie(movie.id);
       };
       moviesContainer.appendChild(div);
     });
 
-    /* Shows */
+    /* ---------- Shows ---------- */
     showData.results?.forEach(show => {
       if (!show.poster_path) return;
 
@@ -87,9 +87,9 @@ async function fetchAll(query = "") {
         <h3>${show.name}</h3>
         <button class="playBtn">Play</button>
       `;
-      div.querySelector("button").onclick = e => {
+      div.querySelector(".playBtn").onclick = e => {
         e.stopPropagation();
-        playShow(show.id);
+        playShow(show.id); // default season 1 episode 1
       };
       showsContainer.appendChild(div);
     });
