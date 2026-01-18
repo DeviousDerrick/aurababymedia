@@ -2,66 +2,81 @@ const moviesContainer = document.getElementById("movies");
 const showsContainer = document.getElementById("shows");
 const searchInput = document.getElementById("searchInput");
 const searchBtn = document.getElementById("searchBtn");
-const playerContainer = document.getElementById("playerContainer");
 
-/* ---------- PLAYER ---------- */
+const seasonContainer = document.getElementById("seasons");
+const episodeContainer = document.getElementById("episodes");
+const videoPlayer = document.getElementById("videoPlayer");
+
+/* ---------- PLAYER FUNCTIONS ---------- */
 function playMovie(movieId) {
-  const iframe = document.createElement("iframe");
-  iframe.src = `https://vidfast.net/movie/${movieId}?autoPlay=true`;
-  iframe.allowFullscreen = true;
-  iframe.allow = "autoplay; fullscreen";
-  iframe.style.width = "100%";
-  iframe.style.height = "100%";
-  iframe.frameBorder = 0;
-
-  playerContainer.innerHTML = "";
-  playerContainer.appendChild(iframe);
-  playerContainer.scrollIntoView({ behavior: "smooth" });
+  videoPlayer.innerHTML = `
+    <iframe src="https://aurababy-proxy2.onrender.com/embed/movie/${movieId}" 
+            width="100%" height="100%" frameborder="0" allowfullscreen allow="autoplay; fullscreen"></iframe>
+  `;
 }
 
-function playShow(showId, season = 1, episode = 1) {
-  const iframe = document.createElement("iframe");
-  iframe.src = `https://vidfast.net/tv/${showId}/${season}/${episode}?autoPlay=true`;
-  iframe.allowFullscreen = true;
-  iframe.allow = "autoplay; fullscreen";
-  iframe.style.width = "100%";
-  iframe.style.height = "100%";
-  iframe.frameBorder = 0;
+async function loadShow(showId, season = 1, episode = 1) {
+  // Load iframe for selected season/episode
+  videoPlayer.innerHTML = `
+    <iframe src="https://aurababy-proxy2.onrender.com/embed/show/${showId}/${season}/${episode}" 
+            width="100%" height="100%" frameborder="0" allowfullscreen allow="autoplay; fullscreen"></iframe>
+  `;
 
-  playerContainer.innerHTML = "";
-  playerContainer.appendChild(iframe);
-  playerContainer.scrollIntoView({ behavior: "smooth" });
+  // Fetch show details from TMDB
+  const res = await fetch(`/api/show/${showId}`);
+  const data = await res.json();
+
+  // Populate seasons
+  seasonContainer.innerHTML = "";
+  data.seasons.forEach(s => {
+    if (!s.season_number) return;
+    const btn = document.createElement("button");
+    btn.textContent = `Season ${s.season_number}`;
+    btn.style.display = "block";
+    btn.style.width = "100%";
+    btn.onclick = () => loadEpisodes(showId, s.season_number);
+    seasonContainer.appendChild(btn);
+  });
+
+  // Load episodes for the selected season by default
+  loadEpisodes(showId, season);
 }
 
-/* ---------- FETCH ---------- */
+async function loadEpisodes(showId, season) {
+  // Fetch episodes for the season
+  const res = await fetch(`/api/show/${showId}/season/${season}`);
+  const data = await res.json();
+
+  episodeContainer.innerHTML = "";
+  data.episodes.forEach(e => {
+    const btn = document.createElement("button");
+    btn.textContent = `Ep ${e.episode_number}: ${e.name}`;
+    btn.style.display = "block";
+    btn.style.width = "100%";
+    btn.onclick = () => loadShow(showId, season, e.episode_number);
+    episodeContainer.appendChild(btn);
+  });
+}
+
+/* ---------- FETCH MOVIES & SHOWS ---------- */
 async function fetchAll(query = "") {
   moviesContainer.textContent = "Loading movies...";
   showsContainer.textContent = "Loading shows...";
 
   try {
-    const movieURL = query
-      ? `/api/search?q=${encodeURIComponent(query)}`
-      : `/api/popular`;
+    const movieURL = query ? `/api/search?q=${encodeURIComponent(query)}` : `/api/popular`;
+    const showURL = query ? `/api/search-shows?q=${encodeURIComponent(query)}` : `/api/popular-shows`;
 
-    const showURL = query
-      ? `/api/search-shows?q=${encodeURIComponent(query)}`
-      : `/api/popular-shows`;
-
-    const [movieRes, showRes] = await Promise.all([
-      fetch(movieURL),
-      fetch(showURL)
-    ]);
-
+    const [movieRes, showRes] = await Promise.all([fetch(movieURL), fetch(showURL)]);
     const movieData = await movieRes.json();
     const showData = await showRes.json();
 
     moviesContainer.innerHTML = "";
     showsContainer.innerHTML = "";
 
-    /* ---------- Movies ---------- */
+    /* ---------- MOVIES ---------- */
     movieData.results?.forEach(movie => {
       if (!movie.poster_path) return;
-
       const div = document.createElement("div");
       div.className = "movie";
       div.innerHTML = `
@@ -76,10 +91,9 @@ async function fetchAll(query = "") {
       moviesContainer.appendChild(div);
     });
 
-    /* ---------- Shows ---------- */
+    /* ---------- SHOWS ---------- */
     showData.results?.forEach(show => {
       if (!show.poster_path) return;
-
       const div = document.createElement("div");
       div.className = "movie";
       div.innerHTML = `
@@ -89,7 +103,7 @@ async function fetchAll(query = "") {
       `;
       div.querySelector(".playBtn").onclick = e => {
         e.stopPropagation();
-        playShow(show.id); // default season 1 episode 1
+        loadShow(show.id); // default: season 1, episode 1
       };
       showsContainer.appendChild(div);
     });
@@ -105,6 +119,4 @@ async function fetchAll(query = "") {
 fetchAll();
 
 searchBtn.onclick = () => fetchAll(searchInput.value.trim());
-searchInput.addEventListener("keydown", e => {
-  if (e.key === "Enter") fetchAll(searchInput.value.trim());
-});
+searchInput.addEventListener("keydown", e => { if (e.key === "Enter") fetchAll(searchInput.value.trim()); });
