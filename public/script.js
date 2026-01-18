@@ -1,24 +1,16 @@
 // ================= CONFIG =================
-const PROXY = "https://aurababy-proxy2.onrender.com/"; // optional
+const PROXY = "https://aurababy-proxy2.onrender.com/"; // your proxy base URL
 const IMG = "https://image.tmdb.org/t/p/w500";
 
 // ================= HELPERS =================
 const $ = id => document.getElementById(id);
 
+// Redirect to our new media.html player
 function playIframe(url) {
-  const player = $("playerContainer");
-  if (!player) return;
-
-  player.innerHTML = `
-    <iframe
-      src="${url}"
-      allow="autoplay; fullscreen"
-      allowfullscreen
-      referrerpolicy="no-referrer"
-    ></iframe>
-  `;
-
-  player.scrollIntoView({ behavior: "smooth" });
+  // Use the proxy URL
+  const proxyUrl = `${PROXY}${url}`;
+  // Redirect to media.html with the proxy URL
+  window.location.href = `media.html?src=${encodeURIComponent(proxyUrl)}`;
 }
 
 // ================= MOVIES =================
@@ -47,7 +39,8 @@ async function loadMovies(query = "") {
     `;
 
     div.querySelector("button").onclick = () => {
-      playIframe(`https://vidfast.pro/movie/${movie.id}?autoPlay=true`);
+      // Redirect to media.html using proxy
+      playIframe(`/movie/${movie.id}?autoPlay=true`);
     };
 
     moviesDiv.appendChild(div);
@@ -79,9 +72,9 @@ async function loadShows(query = "") {
       <button class="playBtn">Watch</button>
     `;
 
-    // 🔥 WATCH = instantly play S1E1
     div.querySelector("button").onclick = () => {
-      playShow(show.id, 1, 1);
+      // Redirect to media.html using proxy for S1E1
+      playIframe(`/tv/${show.id}/1/1?autoPlay=true`);
       loadSeasons(show.id);
     };
 
@@ -91,9 +84,7 @@ async function loadShows(query = "") {
 
 // ================= PLAY SHOW =================
 function playShow(showId, season, episode) {
-  playIframe(
-    `https://vidfast.pro/tv/${showId}/${season}/${episode}?autoPlay=true`
-  );
+  playIframe(`/tv/${showId}/${season}/${episode}?autoPlay=true`);
 }
 
 // ================= SEASONS =================
@@ -119,7 +110,6 @@ async function loadSeasons(showId) {
     seasonBox.appendChild(btn);
   });
 
-  // Auto-load Season 1 episodes
   loadEpisodes(showId, 1);
 }
 
