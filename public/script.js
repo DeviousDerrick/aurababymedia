@@ -1,18 +1,14 @@
 // ================= CONFIG =================
-const PROXY = "https://aurababy-proxy2.onrender.com/"; // your proxy base URL
+const CINEMAOS_BASE = "https://cinemaos.tech/player/"; // CinemaOS player base URL
 const IMG = "https://image.tmdb.org/t/p/w500";
 
 // ================= HELPERS =================
 const $ = id => document.getElementById(id);
 
-// Redirect to media.html using your proxy
-function playIframe(targetUrl) {
-  // Encode the full target URL for the proxy
-  const encoded = encodeURIComponent(targetUrl);
-  const proxyUrl = `${PROXY}scramjet/${encoded}`;
-  
-  // Redirect to media.html
-  window.location.href = `media.html?src=${proxyUrl}`;
+// Redirect to media.html with CinemaOS
+function playIframe(tmdbId) {
+  const cinemaUrl = `${CINEMAOS_BASE}${tmdbId}`;
+  window.location.href = `media.html?src=${encodeURIComponent(cinemaUrl)}`;
 }
 
 // ================= MOVIES =================
@@ -41,8 +37,8 @@ async function loadMovies(query = "") {
     `;
 
     div.querySelector("button").onclick = () => {
-      const target = `https://vidfast.pro/movie/${movie.id}?autoPlay=true`;
-      playIframe(target);
+      // Use CinemaOS link
+      playIframe(movie.id);
     };
 
     moviesDiv.appendChild(div);
@@ -75,9 +71,8 @@ async function loadShows(query = "") {
     `;
 
     div.querySelector("button").onclick = () => {
-      // Play S1E1 by default
-      const target = `https://vidfast.pro/tv/${show.id}/1/1?autoPlay=true`;
-      playIframe(target);
+      // Play show via CinemaOS (first season/episode)
+      playIframe(show.id);
       loadSeasons(show.id);
     };
 
@@ -87,8 +82,8 @@ async function loadShows(query = "") {
 
 // ================= PLAY SHOW =================
 function playShow(showId, season, episode) {
-  const target = `https://vidfast.pro/tv/${showId}/${season}/${episode}?autoPlay=true`;
-  playIframe(target);
+  // CinemaOS currently just uses show ID; can add season/episode if supported
+  playIframe(showId);
 }
 
 // ================= SEASONS =================
