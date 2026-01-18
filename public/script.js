@@ -1,13 +1,9 @@
 // ================= CONFIG =================
-const PROXY = "https://aurababy-proxy2.onrender.com/scramjet/";
+const PROXY = "https://aurababy-proxy2.onrender.com/"; // optional
 const IMG = "https://image.tmdb.org/t/p/w500";
 
 // ================= HELPERS =================
 const $ = id => document.getElementById(id);
-
-function proxify(url) {
-  return PROXY + encodeURIComponent(url);
-}
 
 function playIframe(url) {
   const player = $("playerContainer");
@@ -15,7 +11,7 @@ function playIframe(url) {
 
   player.innerHTML = `
     <iframe
-      src="${proxify(url)}"
+      src="${url}"
       allow="autoplay; fullscreen"
       allowfullscreen
       referrerpolicy="no-referrer"
@@ -25,7 +21,7 @@ function playIframe(url) {
   player.scrollIntoView({ behavior: "smooth" });
 }
 
-// ================= LOAD MOVIES =================
+// ================= MOVIES =================
 async function loadMovies(query = "") {
   const moviesDiv = $("movies");
   moviesDiv.textContent = "Loading movies...";
@@ -58,7 +54,7 @@ async function loadMovies(query = "") {
   });
 }
 
-// ================= LOAD SHOWS =================
+// ================= SHOWS =================
 async function loadShows(query = "") {
   const showsDiv = $("shows");
   showsDiv.textContent = "Loading shows...";
@@ -80,10 +76,12 @@ async function loadShows(query = "") {
     div.innerHTML = `
       <img src="${IMG + show.poster_path}">
       <p>${show.name}</p>
-      <button class="playBtn">View</button>
+      <button class="playBtn">Watch</button>
     `;
 
+    // 🔥 WATCH = instantly play S1E1
     div.querySelector("button").onclick = () => {
+      playShow(show.id, 1, 1);
       loadSeasons(show.id);
     };
 
@@ -91,10 +89,19 @@ async function loadShows(query = "") {
   });
 }
 
+// ================= PLAY SHOW =================
+function playShow(showId, season, episode) {
+  playIframe(
+    `https://vidfast.pro/tv/${showId}/${season}/${episode}?autoPlay=true`
+  );
+}
+
 // ================= SEASONS =================
 async function loadSeasons(showId) {
   const seasonBox = $("seasonContainer");
   const episodeBox = $("episodeContainer");
+
+  if (!seasonBox || !episodeBox) return;
 
   seasonBox.innerHTML = "<p>Seasons</p>";
   episodeBox.innerHTML = "<p>Episodes</p>";
@@ -102,7 +109,7 @@ async function loadSeasons(showId) {
   const res = await fetch(`/api/show/${showId}`);
   const data = await res.json();
 
-  data.seasons.forEach(season => {
+  data.seasons?.forEach(season => {
     if (season.season_number === 0) return;
 
     const btn = document.createElement("button");
@@ -112,26 +119,24 @@ async function loadSeasons(showId) {
     seasonBox.appendChild(btn);
   });
 
-  // Auto-load Season 1
+  // Auto-load Season 1 episodes
   loadEpisodes(showId, 1);
 }
 
 // ================= EPISODES =================
 async function loadEpisodes(showId, seasonNum) {
   const episodeBox = $("episodeContainer");
+  if (!episodeBox) return;
+
   episodeBox.innerHTML = "<p>Episodes</p>";
 
   const res = await fetch(`/api/show/${showId}/season/${seasonNum}`);
   const data = await res.json();
 
-  data.episodes.forEach(ep => {
+  data.episodes?.forEach(ep => {
     const btn = document.createElement("button");
     btn.textContent = `E${ep.episode_number}`;
-    btn.onclick = () => {
-      playIframe(
-        `https://vidfast.pro/tv/${showId}/${seasonNum}/${ep.episode_number}?autoPlay=true`
-      );
-    };
+    btn.onclick = () => playShow(showId, seasonNum, ep.episode_number);
 
     episodeBox.appendChild(btn);
   });
