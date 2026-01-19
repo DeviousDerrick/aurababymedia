@@ -6,7 +6,7 @@
 <title>Aurababy Media Player</title>
 
 <style>
-body, html { margin:0; padding:0; font-family:sans-serif; background:#000; color:white; height:100%; }
+body, html { margin:0; padding:0; font-family:sans-serif; background:#000; color:white; height:100%; display:flex; flex-direction:column; }
 #playerContainer { flex:1; background:#000; border-bottom:2px solid #fff; }
 #playerContainer iframe { width:100%; height:100%; border:none; }
 #controls { padding:10px 20px; background:#111; max-height:300px; overflow-y:auto; }
@@ -34,7 +34,7 @@ h3 { margin:10px 0 5px; }
 <script type="module" src="/baremux.js"></script>
 
 <script type="module">
-import { initBareMux } from "/baremux.js";
+import { initBareMux } from '/baremux.js';
 
 (async () => {
   const PROXY = "https://aurababy-proxy2.onrender.com/scramjet/";
