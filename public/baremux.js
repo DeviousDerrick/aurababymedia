@@ -1,12 +1,9 @@
 // baremux.js - client-side BareMux initializer
-export async function initBareMux() {
-  if (!window.BareMux) {
-    console.error("BareMux not loaded!");
-    return false;
-  }
+import { BareMuxConnection } from '/baremux/index.js';
 
+export async function initBareMux() {
   try {
-    const connection = new BareMux.BareMuxConnection("/baremux/worker.js");
+    const connection = new BareMuxConnection("/baremux/worker.js");
     const wispUrl =
       (location.protocol === "https:" ? "wss" : "ws") + "://" + location.host + "/wisp/";
 
