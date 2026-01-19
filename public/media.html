@@ -4,46 +4,15 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Aurababy Media Player</title>
+
 <style>
-  body, html {
-    margin: 0; padding: 0;
-    font-family: sans-serif;
-    background: #000;
-    color: white;
-    display: flex;
-    flex-direction: column;
-    height: 100%;
-  }
-  #playerContainer {
-    flex: 1;
-    background: #000;
-    border-bottom: 2px solid #fff;
-  }
-  #playerContainer iframe {
-    width: 100%;
-    height: 100%;
-    border: none;
-  }
-  #controls {
-    padding: 10px 20px;
-    background: #111;
-    max-height: 300px;
-    overflow-y: auto;
-  }
-  .season-btn, .episode-btn {
-    display: block;
-    margin: 4px 0;
-    padding: 6px 10px;
-    border-radius: 6px;
-    border: 1px solid #fff;
-    background: #222;
-    color: white;
-    cursor: pointer;
-    text-align: left;
-    transition: 0.2s;
-  }
-  .season-btn:hover, .episode-btn:hover { background: #ff00ff; border-color: #ff00ff; }
-  h3 { margin: 10px 0 5px; }
+body, html { margin:0; padding:0; font-family:sans-serif; background:#000; color:white; height:100%; }
+#playerContainer { flex:1; background:#000; border-bottom:2px solid #fff; }
+#playerContainer iframe { width:100%; height:100%; border:none; }
+#controls { padding:10px 20px; background:#111; max-height:300px; overflow-y:auto; }
+.season-btn, .episode-btn { display:block; margin:4px 0; padding:6px 10px; border-radius:6px; border:1px solid #fff; background:#222; color:white; cursor:pointer; text-align:left; transition:0.2s; }
+.season-btn:hover, .episode-btn:hover { background:#ff00ff; border-color:#ff00ff; }
+h3 { margin:10px 0 5px; }
 </style>
 </head>
 <body>
@@ -59,13 +28,20 @@
   <div id="episodesContainer"></div>
 </div>
 
-<script>
+<!-- BareMux + Epoxy -->
+<script type="module" src="/baremux/index.js"></script>
+<script type="module" src="/epoxy/index.js"></script>
+<script type="module" src="/baremux.js"></script>
+
+<script type="module">
+import { initBareMux } from "/baremux.js";
+
 (async () => {
   const PROXY = "https://aurababy-proxy2.onrender.com/scramjet/";
 
   const params = new URLSearchParams(window.location.search);
   const src = params.get("src");
-  const isTV = params.get("tv"); 
+  const isTV = params.get("tv");
   const showId = params.get("id");
 
   const iframe = document.getElementById("media-frame");
@@ -77,13 +53,25 @@
     return;
   }
 
-  function proxyUrl(url) { return PROXY + encodeURIComponent(url); }
+  // Initialize BareMux first
+  const ready = await initBareMux();
+  if (!ready) {
+    iframe.parentElement.innerHTML = "<p style='color:white;text-align:center;'>Proxy initialization failed.</p>";
+    return;
+  }
+
+  // Helper to send URL through proxy
+  const proxyUrl = (url) => PROXY + encodeURIComponent(url);
+
+  // Load iframe after BareMux ready
   iframe.src = proxyUrl(src);
 
+  // ================= SHOW SEASONS & EPISODES =================
   if (isTV && showId) {
     const res = await fetch(`/api/show/${showId}`);
     const data = await res.json();
 
+    // Load seasons
     data.seasons?.forEach(season => {
       if (season.season_number === 0) return;
       const btn = document.createElement("button");
@@ -93,9 +81,11 @@
       seasonsContainer.appendChild(btn);
     });
 
+    // Auto-load Season 1 episodes
     loadEpisodes(showId, 1);
   }
 
+  // ================= LOAD EPISODES =================
   async function loadEpisodes(showId, seasonNum) {
     episodesContainer.innerHTML = "";
     const res = await fetch(`/api/show/${showId}/season/${seasonNum}`);
@@ -112,6 +102,7 @@
       episodesContainer.appendChild(btn);
     });
   }
+
 })();
 </script>
 
